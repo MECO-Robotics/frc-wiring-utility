@@ -2,8 +2,7 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import type { DeviceType } from "../types";
-import { SchematicNode } from "./SchematicNode";
+import type { DeviceType } from "../palette";
 import { PALETTE } from "../palette";
 
 export function PalettePanel(props: {
@@ -17,29 +16,31 @@ export function PalettePanel(props: {
             <CardHeader className="pb-2">
                 <CardTitle className="text-base">Palette</CardTitle>
             </CardHeader>
+
             <CardContent className="space-y-3">
                 <div className="grid grid-cols-2 gap-2">
                     {PALETTE.map((p) => (
                         <div
-                            key={p.type}
+                            key={p.id}
                             draggable
-                            onDragStart={(e) => onPaletteDragStart(e, p.type)}
-                            className="rounded-xl"
+                            onDragStart={(e) => onPaletteDragStart(e, p.id)}
+                            className="rounded-xl border bg-card hover:bg-accent/40 transition-colors p-2"
                             title="Drag onto schematic"
                         >
-                            <div style={{ width: 160, height: 90 }}>
-                                <SchematicNode
-                                    device={{
-                                        name: p.label,
-                                        type: p.type,
-                                        subsystem: undefined,
-                                        attrs: {},
-                                    }}
-                                    selected={false}
-                                    showDragBadge={false} // palette doesn't need it
+                            <div className="flex items-center justify-center rounded-lg bg-background/40"
+                                style={{ width: 160, height: 90 }}>
+                                <img
+                                    src={p.svgUrl}
+                                    alt={p.name}
+                                    className="max-w-full max-h-full"
+                                    draggable={false}
                                 />
                             </div>
-                            <div className="mt-1 text-xs text-muted-foreground">{p.hint}</div>
+
+                            <div className="mt-2 text-xs font-medium leading-tight">{p.name}</div>
+                            <div className="mt-1 text-[11px] text-muted-foreground">
+                                {p.category}
+                            </div>
                         </div>
                     ))}
                 </div>
@@ -53,9 +54,9 @@ export function PalettePanel(props: {
                             <SelectValue placeholder="Add device" />
                         </SelectTrigger>
                         <SelectContent>
-                            {(PALETTE.map((x) => x.type) as DeviceType[]).map((t) => (
-                                <SelectItem key={t} value={t}>
-                                    {t}
+                            {PALETTE.map((p) => (
+                                <SelectItem key={p.id} value={p.id}>
+                                    {p.name}
                                 </SelectItem>
                             ))}
                         </SelectContent>

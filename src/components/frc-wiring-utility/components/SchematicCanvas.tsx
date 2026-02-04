@@ -1,9 +1,32 @@
 import React, { useRef, useState } from "react";
-import { Badge } from "@/components/ui/badge";
-import { MousePointer2 } from "lucide-react";
 import type { DeviceType, Project } from "../types";
 import { CanvasNode } from "./CanvasNode";
-import { clamp, deviceHasCanId, getPlacement, snap } from "../helpers";
+import { clamp, getPlacement, snapCenterToTopLeft, snapTopLeftByCenter } from "../helpers";
+import { PALETTE_BY_ID } from "../paletteLookup";
+
+function safePos(n: unknown, fallback: number) {
+    const x = typeof n === "number" ? n : Number(n);
+    return Number.isFinite(x) && x > 0 ? x : fallback;
+}
+
+function nodeSize(type: unknown, fallbackW: number, fallbackH: number) {
+    const item = PALETTE_BY_ID.get(type as any);
+    const aspect = item?.svg_meta?.aspect;
+
+    const w = safePos((item as any)?.size?.w ?? item?.svg_meta?.w ?? (item as any)?.svg_meta?.width, fallbackW);
+    let h = safePos((item as any)?.size?.h ?? item?.svg_meta?.h ?? (item as any)?.svg_meta?.height, fallbackH);
+
+    if (
+        (!((item as any)?.size?.h) && !(item?.svg_meta as any)?.h && !((item as any)?.svg_meta?.height)) &&
+        typeof aspect === "number" &&
+        Number.isFinite(aspect) &&
+        aspect > 0
+    ) {
+        h = w / aspect;
+    }
+
+    return { w, h };
+}
 
 export function SchematicCanvas(props: {
     project: Project;
@@ -40,6 +63,8 @@ export function SchematicCanvas(props: {
     const ZOOM_MIN = 0.3;
     const ZOOM_MAX = 2.5;
 
+
+
     const panDragRef = useRef<{
         active: boolean;
         startClientX: number;
@@ -55,6 +80,8 @@ export function SchematicCanvas(props: {
         startY: number;
         originX: number;
         originY: number;
+        nodeW: number;
+        nodeH: number;
     } | null>(null);
 
     const canvasPointFromEvent = (clientX: number, clientY: number) => {
@@ -87,16 +114,13 @@ export function SchematicCanvas(props: {
         e.preventDefault();
         const pt = canvasPointFromEvent(e.clientX, e.clientY);
 
-        const el = canvasRef.current;
-        const w = el?.clientWidth ?? 1200;
-        const h = el?.clientHeight ?? 800;
-
         // screen -> world
         const world = screenToWorld(pt.x, pt.y);
 
-        const x = clamp(snap(world.x - NODE_W / 2, GRID), 0, Math.max(0, w - NODE_W));
-        const y = clamp(snap(world.y - NODE_H / 2, GRID), 0, Math.max(0, h - NODE_H));
+        const { w: nodeW, h: nodeH } = nodeSize(type, NODE_W, NODE_H);
 
+        const x = snapCenterToTopLeft(world.x, nodeW, GRID);
+        const y = snapCenterToTopLeft(world.y, nodeH, GRID);
         onDropCreate(type, x, y);
     };
 
@@ -172,6 +196,9 @@ export function SchematicCanvas(props: {
         const pl = getPlacement(project, deviceId);
         if (!pl) return;
 
+        const d = project.devices.find((x) => x.id === deviceId);
+        const { w: nodeW, h: nodeH } = nodeSize(d?.type, NODE_W, NODE_H);
+
         (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
 
         nodeDragRef.current = {
@@ -180,6 +207,8 @@ export function SchematicCanvas(props: {
             startY: e.clientY,
             originX: pl.x,
             originY: pl.y,
+            nodeW,
+            nodeH,
         };
 
         setSelectedDeviceId(deviceId);
@@ -189,16 +218,15 @@ export function SchematicCanvas(props: {
         const st = nodeDragRef.current;
         if (!st) return;
 
-        const el = canvasRef.current;
-        const w = el?.clientWidth ?? 1200;
-        const h = el?.clientHeight ?? 800;
-
         // Important: pointer deltas are in SCREEN pixels; convert to WORLD delta by /zoom
         const dx = (e.clientX - st.startX) / zoom;
         const dy = (e.clientY - st.startY) / zoom;
 
-        const x = clamp(snap(st.originX + dx, GRID), 0, Math.max(0, w - NODE_W));
-        const y = clamp(snap(st.originY + dy, GRID), 0, Math.max(0, h - NODE_H));
+        const rawX = st.originX + dx;
+        const rawY = st.originY + dy;
+
+        const x = snapTopLeftByCenter(rawX, st.nodeW, GRID);
+        const y = snapTopLeftByCenter(rawY, st.nodeH, GRID);
 
         onMovePlacement(st.deviceId, x, y);
     };
@@ -218,9 +246,10 @@ export function SchematicCanvas(props: {
             .map((d) => {
                 const pl = getPlacement(project, d.id);
                 if (!pl) return null;
-                return { x: pl.x, y: pl.y };
+                const sz = nodeSize(d.type, NODE_W, NODE_H);
+                return { x: pl.x, y: pl.y, w: sz.w, h: sz.h };
             })
-            .filter(Boolean) as { x: number; y: number }[];
+            .filter(Boolean) as { x: number; y: number; w: number; h: number }[];
 
         // If no items, just reset view
         if (placements.length === 0) {
@@ -229,7 +258,7 @@ export function SchematicCanvas(props: {
             return;
         }
 
-        // World-space bounds of all nodes (include NODE_W/H)
+        // World-space bounds of all nodes (include per-node sizes)
         let minX = Infinity,
             minY = Infinity,
             maxX = -Infinity,
@@ -238,8 +267,8 @@ export function SchematicCanvas(props: {
         for (const p of placements) {
             minX = Math.min(minX, p.x);
             minY = Math.min(minY, p.y);
-            maxX = Math.max(maxX, p.x + NODE_W);
-            maxY = Math.max(maxY, p.y + NODE_H);
+            maxX = Math.max(maxX, p.x + p.w);
+            maxY = Math.max(maxY, p.y + p.h);
         }
 
         const boundsW = maxX - minX;
@@ -286,8 +315,7 @@ export function SchematicCanvas(props: {
             // Don't steal space when typing in inputs
             const t = e.target as HTMLElement | null;
             const tag = t?.tagName?.toLowerCase();
-            const isTyping =
-                tag === "input" || tag === "textarea" || (t as any)?.isContentEditable;
+            const isTyping = tag === "input" || tag === "textarea" || (t as any)?.isContentEditable;
 
             if (isTyping) return;
 
@@ -339,7 +367,7 @@ export function SchematicCanvas(props: {
                     </div>
                 ) : null}
 
-                // inside the canvas div (same place you render nodes)
+                {/* inside the canvas div (same place you render nodes) */}
                 <div
                     className="absolute inset-0"
                     style={{
@@ -362,14 +390,10 @@ export function SchematicCanvas(props: {
                         />
                     ))}
                 </div>
-
-
             </div>
 
             <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
-                <div>
-                    Grid: {GRID}px • Pan: drag empty space • Zoom: mouse wheel • Snap is in world units
-                </div>
+                <div>Grid: {GRID}px • Pan: drag empty space • Zoom: mouse wheel • Snap is in world units</div>
                 <div>Next logical step: render connections as SVG paths using ports + node positions in world coords.</div>
             </div>
         </div>

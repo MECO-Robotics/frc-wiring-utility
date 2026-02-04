@@ -71,3 +71,16 @@ export function removePlacement(p: Project, deviceId: string): Project {
     const arr = ensurePlacements(p).filter((x) => x.deviceId !== deviceId);
     return { ...p, placements: arr };
 }
+
+// Snap a center coordinate to the grid, then convert back to top-left.
+export function snapTopLeftByCenter(topLeft: number, size: number, grid: number) {
+    const center = topLeft + size / 2;
+    const snappedCenter = snap(center, grid);
+    return snappedCenter - size / 2;
+}
+
+// Given a desired center coordinate, snap it and return top-left.
+export function snapCenterToTopLeft(center: number, size: number, grid: number) {
+    const snappedCenter = snap(center, grid);
+    return snappedCenter - size / 2;
+}
