@@ -1327,8 +1327,8 @@
         }
       ],
       "physical_in": {
-        "w": 1.796,
-        "h": 1.181
+        "w": 2.860,
+        "h": 1.875
       },
       "physical_in_source": "scaled_from_pdh_reference_viewbox"
     },
