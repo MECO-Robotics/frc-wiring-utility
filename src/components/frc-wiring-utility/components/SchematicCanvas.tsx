@@ -4,28 +4,22 @@ import { CanvasNode } from "./CanvasNode";
 import { clamp, getPlacement, snapCenterToTopLeft, snapTopLeftByCenter } from "../helpers";
 import { PALETTE_BY_ID } from "../paletteLookup";
 
-function safePos(n: unknown, fallback: number) {
-    const x = typeof n === "number" ? n : Number(n);
-    return Number.isFinite(x) && x > 0 ? x : fallback;
-}
+const PX_PER_IN = 60; // MUST match CanvasNode.tsx or your dragging/fit math won't match visuals.
 
-function nodeSize(type: unknown, fallbackW: number, fallbackH: number) {
+function nodeSizePx(type: unknown, placementScale: number | undefined, fallbackW: number, fallbackH: number) {
     const item = PALETTE_BY_ID.get(type as any);
-    const aspect = item?.svg_meta?.aspect;
 
-    const w = safePos((item as any)?.size?.w ?? item?.svg_meta?.w ?? (item as any)?.svg_meta?.width, fallbackW);
-    let h = safePos((item as any)?.size?.h ?? item?.svg_meta?.h ?? (item as any)?.svg_meta?.height, fallbackH);
+    const s = typeof placementScale === "number" && Number.isFinite(placementScale) && placementScale > 0 ? placementScale : 1;
 
-    if (
-        (!((item as any)?.size?.h) && !(item?.svg_meta as any)?.h && !((item as any)?.svg_meta?.height)) &&
-        typeof aspect === "number" &&
-        Number.isFinite(aspect) &&
-        aspect > 0
-    ) {
-        h = w / aspect;
+    const phys = (item as any)?.physical_in;
+    const w_in = phys?.w;
+    const h_in = phys?.h;
+
+    if (Number.isFinite(w_in) && Number.isFinite(h_in) && w_in > 0 && h_in > 0) {
+        return { w: w_in * PX_PER_IN * s, h: h_in * PX_PER_IN * s };
     }
 
-    return { w, h };
+    return { w: fallbackW * s, h: fallbackH * s };
 }
 
 export function SchematicCanvas(props: {
@@ -37,8 +31,6 @@ export function SchematicCanvas(props: {
     NODE_H: number;
     onDropCreate: (type: DeviceType, x: number, y: number) => void;
     onMovePlacement: (deviceId: string, x: number, y: number) => void;
-
-    // NEW: expose a centering function up to parent (optional but useful)
     registerCenterFn?: (fn: () => void) => void;
 }) {
     const {
@@ -55,15 +47,12 @@ export function SchematicCanvas(props: {
 
     const canvasRef = useRef<HTMLDivElement | null>(null);
 
-    // View transform:
     // screen = world * zoom + pan
     const [pan, setPan] = useState({ x: 0, y: 0 });
     const [zoom, setZoom] = useState(1);
 
     const ZOOM_MIN = 0.3;
     const ZOOM_MAX = 2.5;
-
-
 
     const panDragRef = useRef<{
         active: boolean;
@@ -91,13 +80,7 @@ export function SchematicCanvas(props: {
         return { x: clientX - r.left, y: clientY - r.top };
     };
 
-    const screenToWorld = (sx: number, sy: number) => {
-        return { x: (sx - pan.x) / zoom, y: (sy - pan.y) / zoom };
-    };
-
-    const worldToScreen = (wx: number, wy: number) => {
-        return { x: wx * zoom + pan.x, y: wy * zoom + pan.y };
-    };
+    const screenToWorld = (sx: number, sy: number) => ({ x: (sx - pan.x) / zoom, y: (sy - pan.y) / zoom });
 
     // ---------- Palette drop ----------
     const onCanvasDragOver = (e: React.DragEvent) => {
@@ -113,11 +96,9 @@ export function SchematicCanvas(props: {
 
         e.preventDefault();
         const pt = canvasPointFromEvent(e.clientX, e.clientY);
-
-        // screen -> world
         const world = screenToWorld(pt.x, pt.y);
 
-        const { w: nodeW, h: nodeH } = nodeSize(type, NODE_W, NODE_H);
+        const { w: nodeW, h: nodeH } = nodeSizePx(type, 1, NODE_W, NODE_H);
 
         const x = snapCenterToTopLeft(world.x, nodeW, GRID);
         const y = snapCenterToTopLeft(world.y, nodeH, GRID);
@@ -164,26 +145,16 @@ export function SchematicCanvas(props: {
 
     // ---------- Zoom (wheel, anchored at cursor) ----------
     const onWheel = (e: React.WheelEvent<HTMLDivElement>) => {
-        // Prevent page scroll when cursor is over canvas
         e.preventDefault();
 
         const pt = canvasPointFromEvent(e.clientX, e.clientY);
-
-        // World coord under cursor BEFORE zoom
         const before = screenToWorld(pt.x, pt.y);
 
-        // Choose zoom factor. Trackpads send small deltas; wheels send bigger.
         const base = 0.0015;
-        const factor = Math.exp(-e.deltaY * base); // deltaY>0 => zoom out
-
+        const factor = Math.exp(-e.deltaY * base);
         const nextZoom = clamp(zoom * factor, ZOOM_MIN, ZOOM_MAX);
-
-        // If clamped, adjust factor so anchoring math remains consistent
         const appliedFactor = nextZoom / zoom;
 
-        // Update pan so that the same world point stays under the cursor:
-        // screen = world*zoom + pan
-        // keep cursor screen pt fixed => newPan = pt - before*nextZoom
         const nextPanX = pt.x - before.x * (zoom * appliedFactor);
         const nextPanY = pt.y - before.y * (zoom * appliedFactor);
 
@@ -197,7 +168,7 @@ export function SchematicCanvas(props: {
         if (!pl) return;
 
         const d = project.devices.find((x) => x.id === deviceId);
-        const { w: nodeW, h: nodeH } = nodeSize(d?.type, NODE_W, NODE_H);
+        const { w: nodeW, h: nodeH } = nodeSizePx(d?.type, (pl as any).scale, NODE_W, NODE_H);
 
         (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
 
@@ -218,7 +189,6 @@ export function SchematicCanvas(props: {
         const st = nodeDragRef.current;
         if (!st) return;
 
-        // Important: pointer deltas are in SCREEN pixels; convert to WORLD delta by /zoom
         const dx = (e.clientX - st.startX) / zoom;
         const dy = (e.clientY - st.startY) / zoom;
 
@@ -235,7 +205,7 @@ export function SchematicCanvas(props: {
         nodeDragRef.current = null;
     };
 
-    // Grid should scale with zoom. Keep it readable by scaling the background-size.
+    // Grid scales with zoom
     const gridPx = GRID * zoom;
 
     const centerOnItems = () => {
@@ -246,19 +216,17 @@ export function SchematicCanvas(props: {
             .map((d) => {
                 const pl = getPlacement(project, d.id);
                 if (!pl) return null;
-                const sz = nodeSize(d.type, NODE_W, NODE_H);
+                const sz = nodeSizePx(d.type, (pl as any).scale, NODE_W, NODE_H);
                 return { x: pl.x, y: pl.y, w: sz.w, h: sz.h };
             })
             .filter(Boolean) as { x: number; y: number; w: number; h: number }[];
 
-        // If no items, just reset view
         if (placements.length === 0) {
             setZoom(1);
             setPan({ x: 0, y: 0 });
             return;
         }
 
-        // World-space bounds of all nodes (include per-node sizes)
         let minX = Infinity,
             minY = Infinity,
             maxX = -Infinity,
@@ -274,26 +242,22 @@ export function SchematicCanvas(props: {
         const boundsW = maxX - minX;
         const boundsH = maxY - minY;
 
-        // Canvas size in screen px
         const cw = el.clientWidth;
         const ch = el.clientHeight;
 
-        // Padding around the fitted box (screen px)
         const pad = 80;
         const availW = Math.max(1, cw - pad * 2);
         const availH = Math.max(1, ch - pad * 2);
 
-        // Fit zoom (uniform)
         const fitZoom = Math.min(availW / boundsW, availH / boundsH);
         const nextZoom = clamp(fitZoom, ZOOM_MIN, ZOOM_MAX);
 
-        // Center bounds in screen
         const worldCx = minX + boundsW / 2;
         const worldCy = minY + boundsH / 2;
+
         const screenCx = cw / 2;
         const screenCy = ch / 2;
 
-        // screen = world*zoom + pan => pan = screen - world*zoom
         const nextPanX = screenCx - worldCx * nextZoom;
         const nextPanY = screenCy - worldCy * nextZoom;
 
@@ -301,22 +265,18 @@ export function SchematicCanvas(props: {
         setPan({ x: nextPanX, y: nextPanY });
     };
 
-    // Let parent store a handle for the button
     React.useEffect(() => {
         registerCenterFn?.(centerOnItems);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [registerCenterFn, project, NODE_W, NODE_H]);
 
-    // Spacebar centers/fits (avoid scrolling / button activation)
     React.useEffect(() => {
         const onKeyDown = (e: KeyboardEvent) => {
             if (e.code !== "Space") return;
 
-            // Don't steal space when typing in inputs
             const t = e.target as HTMLElement | null;
             const tag = t?.tagName?.toLowerCase();
             const isTyping = tag === "input" || tag === "textarea" || (t as any)?.isContentEditable;
-
             if (isTyping) return;
 
             e.preventDefault();
@@ -346,15 +306,12 @@ export function SchematicCanvas(props: {
           dark:[background-image:linear-gradient(to_right,rgba(255,255,255,0.10)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.10)_1px,transparent_1px)]
         "
                 style={{
-                    // grid scales with zoom and shifts with pan
                     backgroundSize: `${gridPx}px ${gridPx}px`,
                     backgroundPosition: `${pan.x}px ${pan.y}px`,
                     cursor: panDragRef.current?.active ? "grabbing" : "grab",
-                    // Needed so onWheel preventDefault actually works in React
                     touchAction: "none",
                 }}
             >
-                {/* HUD */}
                 <div className="absolute right-3 top-3 z-10 rounded-xl border bg-background/80 px-2 py-1 text-xs text-muted-foreground backdrop-blur">
                     Zoom: {Math.round(zoom * 100)}%
                 </div>
@@ -367,7 +324,6 @@ export function SchematicCanvas(props: {
                     </div>
                 ) : null}
 
-                {/* inside the canvas div (same place you render nodes) */}
                 <div
                     className="absolute inset-0"
                     style={{

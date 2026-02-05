@@ -1719,10 +1719,6 @@
       "w": 463.36,
       "h": 920.75
     },
-    "slots": [
-      { "id": "fuse_1", "kind": "pdh_fuse", "x": 0.86, "y": 0.18 },
-      { "id": "fuse_2", "kind": "pdh_fuse", "x": 0.86, "y": 0.24 }
-    ],
     "inches_per_viewbox_unit": 0.009548502536291126,
     "reference_axis_swapped": false,
     "relative_fit_error": 0.02006991416878448,

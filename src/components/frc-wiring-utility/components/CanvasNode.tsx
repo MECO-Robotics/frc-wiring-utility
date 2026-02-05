@@ -4,28 +4,23 @@ import { getPlacement } from "../helpers";
 import { SchematicNode } from "./SchematicNode";
 import { PALETTE_BY_ID } from "../paletteLookup";
 
-function safePos(n: unknown, fallback: number) {
-    const x = typeof n === "number" ? n : Number(n);
-    return Number.isFinite(x) && x > 0 ? x : fallback;
-}
+const PX_PER_IN = 60; // tweak to taste (50/60/80). This is "zoom feel" at zoom=1.
 
-function nodeSize(type: unknown, fallbackW: number, fallbackH: number) {
+function nodeSizePx(type: unknown, placementScale: number | undefined, fallbackW: number, fallbackH: number) {
     const item = PALETTE_BY_ID.get(type as any);
-    const aspect = item?.svg_meta?.aspect;
 
-    const w = safePos((item as any)?.size?.w ?? item?.svg_meta?.w ?? (item as any)?.svg_meta?.width, fallbackW);
-    let h = safePos((item as any)?.size?.h ?? item?.svg_meta?.h ?? (item as any)?.svg_meta?.height, fallbackH);
+    const s = typeof placementScale === "number" && Number.isFinite(placementScale) && placementScale > 0 ? placementScale : 1;
 
-    if (
-        (!((item as any)?.size?.h) && !(item?.svg_meta as any)?.h && !((item as any)?.svg_meta?.height)) &&
-        typeof aspect === "number" &&
-        Number.isFinite(aspect) &&
-        aspect > 0
-    ) {
-        h = w / aspect;
+    const phys = (item as any)?.physical_in;
+    const w_in = phys?.w;
+    const h_in = phys?.h;
+
+    if (Number.isFinite(w_in) && Number.isFinite(h_in) && w_in > 0 && h_in > 0) {
+        return { w: w_in * PX_PER_IN * s, h: h_in * PX_PER_IN * s };
     }
 
-    return { w, h };
+    // Fallback: keep app usable even if a part is missing physical dims
+    return { w: fallbackW * s, h: fallbackH * s };
 }
 
 export function CanvasNode(props: {
@@ -60,7 +55,8 @@ export function CanvasNode(props: {
 
     const selected = selectedDeviceId === deviceId;
 
-    const { w: nodeW, h: nodeH } = nodeSize(d.type, NODE_W, NODE_H);
+    // Use placement.scale if you store it; otherwise defaults to 1
+    const { w: nodeW, h: nodeH } = nodeSizePx(d.type, (pl as any).scale, NODE_W, NODE_H);
 
     return (
         <div
@@ -89,8 +85,7 @@ export function CanvasNode(props: {
                 setSelectedDeviceId(deviceId);
             }}
         >
-            <SchematicNode device={d} selected={selected} />
-            {/* If you want coords, make it an optional overlay here, not inside SchematicNode */}
+            <SchematicNode device={d as any} selected={selected} />
         </div>
     );
 }

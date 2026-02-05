@@ -45,12 +45,45 @@ const svgUrlModules = import.meta.glob(
 ) as Record<string, string>;
 
 
-function resolveSvgUrl(svgFile: string): string {
-    const suffix = `/wiring-components/${svgFile}`;
-    const hitKey = Object.keys(svgUrlModules).find((k) => k.endsWith(suffix));
-    if (!hitKey) throw new Error(`Missing SVG asset: ${svgFile}`);
-    return svgUrlModules[hitKey];
+// palette.ts
+
+// 1) Use an ABSOLUTE glob so keys are stable:
+// Keys will look like: "/src/assets/wiring-components/fuses/10A Automotive Fuse.svg"
+const SVG_URLS = import.meta.glob("/src/assets/wiring-components/**/*.svg", {
+    eager: true,
+    as: "url",
+}) as Record<string, string>;
+
+const SVG_BASE = "/src/assets/wiring-components/";
+
+/** Normalize palette json "svg" field into the glob key */
+function toGlobKey(svgRelPath: string) {
+    const clean = svgRelPath
+        .replaceAll("\\", "/")
+        .replace(/^\.?\//, ""); // remove leading "./" or "/"
+    return `${SVG_BASE}${clean}`;
 }
+
+export function resolveSvgUrl(svgRelPath: string): string {
+    const key = toGlobKey(svgRelPath);
+    const hit = SVG_URLS[key];
+    if (hit) return hit;
+
+    // Fallback: try to find by suffix (helps if base path differs)
+    const clean = svgRelPath.replaceAll("\\", "/").replace(/^\.?\//, "");
+    const suffix = `/${clean}`;
+    const altKey = Object.keys(SVG_URLS).find((k) => k.endsWith(suffix));
+    if (altKey) return SVG_URLS[altKey];
+
+    // Helpful error message
+    const sample = Object.keys(SVG_URLS).slice(0, 8).join("\n  ");
+    throw new Error(
+        `Missing SVG asset: ${svgRelPath}\n` +
+        `Tried key: ${key}\n` +
+        `Available keys (sample):\n  ${sample}\n`
+    );
+}
+
 
 function slugCheck(id: string) {
     // Keep this strict so IDs are safe keys
