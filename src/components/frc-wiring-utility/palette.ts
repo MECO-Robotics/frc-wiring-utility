@@ -1,4 +1,4 @@
-import paletteDef from "@/assets/wiring-components/palette.json";
+import paletteIndex from "@/assets/wiring-components/palette.json";
 
 export type PortType = "ethernet" | "4_gauge" | "12_gauge" | "18_gauge" | "usb";
 
@@ -30,26 +30,22 @@ export type PaletteItem = {
     svgUrl: string; // resolved at build time
 };
 
-type PaletteJson = {
+type PaletteIndexJson = {
     version: number;
     units: "relative";
     coordinate_system: "component_bbox";
     port_types: PortType[];
-    components: Array<Omit<PaletteItem, "svgUrl">>;
+    components: string[];
+    physical_scale?: unknown;
 };
 
-// Vite: eager import so we have URLs at runtime
-const svgUrlModules = import.meta.glob(
-    "/src/assets/wiring-components/*.svg",
-    { eager: true, import: "default" }
-) as Record<string, string>;
-
+type PaletteComponentJson = Omit<PaletteItem, "svgUrl">;
 
 // palette.ts
 
 // 1) Use an ABSOLUTE glob so keys are stable:
-// Keys will look like: "/src/assets/wiring-components/fuses/10A Automotive Fuse.svg"
-const SVG_URLS = import.meta.glob("/src/assets/wiring-components/**/*.svg", {
+// Keys will look like: "/src/assets/wiring-components/svg/10A Automotive Fuse.svg"
+const SVG_URLS = import.meta.glob("/src/assets/wiring-components/svg/*.svg", {
     eager: true,
     as: "url",
 }) as Record<string, string>;
@@ -84,6 +80,36 @@ export function resolveSvgUrl(svgRelPath: string): string {
     );
 }
 
+const COMPONENTS = import.meta.glob(
+    "/src/assets/wiring-components/configs/*.json",
+    { eager: true, import: "default" }
+) as Record<string, PaletteComponentJson>;
+
+function toComponentKey(componentRelPath: string) {
+    const clean = componentRelPath
+        .replaceAll("\\", "/")
+        .replace(/^\.?\//, "");
+    return `${SVG_BASE}${clean}`;
+}
+
+function resolveComponent(componentRelPath: string): PaletteComponentJson {
+    const key = toComponentKey(componentRelPath);
+    const hit = COMPONENTS[key];
+    if (hit) return hit;
+
+    const clean = componentRelPath.replaceAll("\\", "/").replace(/^\.?\//, "");
+    const suffix = `/${clean}`;
+    const altKey = Object.keys(COMPONENTS).find((k) => k.endsWith(suffix));
+    if (altKey) return COMPONENTS[altKey];
+
+    const sample = Object.keys(COMPONENTS).slice(0, 8).join("\n  ");
+    throw new Error(
+        `Missing component JSON: ${componentRelPath}\n` +
+        `Tried key: ${key}\n` +
+        `Available keys (sample):\n  ${sample}\n`
+    );
+}
+
 
 function slugCheck(id: string) {
     // Keep this strict so IDs are safe keys
@@ -92,10 +118,11 @@ function slugCheck(id: string) {
     }
 }
 
-const def = paletteDef as unknown as PaletteJson;
+const def = paletteIndex as unknown as PaletteIndexJson;
 
 const seen = new Set<string>();
-export const PALETTE: PaletteItem[] = def.components.map((c) => {
+export const PALETTE: PaletteItem[] = def.components.map((componentPath) => {
+    const c = resolveComponent(componentPath);
     slugCheck(c.id);
     if (seen.has(c.id)) throw new Error(`Duplicate palette id: ${c.id}`);
     seen.add(c.id);

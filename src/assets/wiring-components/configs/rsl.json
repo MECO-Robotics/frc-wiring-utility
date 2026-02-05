@@ -1,0 +1,37 @@
+{
+  "id": "rsl",
+  "name": "RSL",
+  "svg": "svg/RSL.svg",
+  "category": "uncategorized",
+  "tags": [],
+  "defaults": {
+    "rotation": 0,
+    "scale": 1
+  },
+  "svg_meta": {
+    "viewBox": {
+      "minX": 0,
+      "minY": 0,
+      "width": 185.49,
+      "height": 153.66
+    },
+    "widthAttr": "185.49",
+    "heightAttr": "153.66",
+    "widthPx": 185.49,
+    "heightPx": 153.66,
+    "aspect": 1.2071456462319408
+  },
+  "ports": [
+    {
+      "id": "signal",
+      "type": "18_gauge",
+      "x": 0.1,
+      "y": 0.85
+    }
+  ],
+  "physical_in": {
+    "w": 1.771,
+    "h": 1.467
+  },
+  "physical_in_source": "scaled_from_pdh_reference_viewbox"
+}

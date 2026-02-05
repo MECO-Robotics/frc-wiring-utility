@@ -1,0 +1,74 @@
+{
+  "id": "roborio-2-0",
+  "name": "RoboRIO 2.0",
+  "svg": "svg/RoboRIO 2.0.svg",
+  "category": "uncategorized",
+  "tags": [],
+  "defaults": {
+    "rotation": 0,
+    "scale": 1
+  },
+  "svg_meta": {
+    "viewBox": {
+      "minX": 0,
+      "minY": 0,
+      "width": 504,
+      "height": 496.51
+    },
+    "widthAttr": "504",
+    "heightAttr": "496.51",
+    "widthPx": 504,
+    "heightPx": 496.51,
+    "aspect": 1.015085295361624
+  },
+  "ports": [
+    {
+      "id": "power",
+      "type": "18_gauge",
+      "x": 0.1,
+      "y": 0.2
+    },
+    {
+      "id": "ethernet",
+      "type": "ethernet",
+      "x": 0.1,
+      "y": 0.4
+    },
+    {
+      "id": "usb_1",
+      "type": "usb",
+      "x": 0.1,
+      "y": 0.6
+    },
+    {
+      "id": "usb_2",
+      "type": "usb",
+      "x": 0.1,
+      "y": 0.7
+    },
+    {
+      "id": "io_dio",
+      "type": "18_gauge",
+      "x": 0.9,
+      "y": 0.3
+    },
+    {
+      "id": "io_pwm",
+      "type": "18_gauge",
+      "x": 0.9,
+      "y": 0.45
+    },
+    {
+      "id": "io_analog",
+      "type": "18_gauge",
+      "x": 0.9,
+      "y": 0.6
+    }
+  ],
+  "physical_in": {
+    "w": 5.75,
+    "h": 5.64,
+    "t": 1.37
+  },
+  "physical_in_source": "ni_roborio_2.0_specs"
+}

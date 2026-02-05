@@ -1,0 +1,37 @@
+{
+  "id": "neo-1-1",
+  "name": "Neo 1.1",
+  "svg": "svg/Neo 1.1.svg",
+  "category": "uncategorized",
+  "tags": [],
+  "defaults": {
+    "rotation": 0,
+    "scale": 1
+  },
+  "svg_meta": {
+    "viewBox": {
+      "minX": 0,
+      "minY": 0,
+      "width": 650,
+      "height": 1008
+    },
+    "widthAttr": "100%",
+    "heightAttr": "100%",
+    "widthPx": 650,
+    "heightPx": 1008,
+    "aspect": 0.6448412698412699
+  },
+  "ports": [
+    {
+      "id": "motor_power",
+      "type": "12_gauge",
+      "x": 0.5,
+      "y": 0.92
+    }
+  ],
+  "physical_in": {
+    "w": 2.36,
+    "h": 3.67
+  },
+  "physical_in_source": "scaled_from_pdh_reference_viewbox"
+}

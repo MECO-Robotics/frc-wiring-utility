@@ -1,0 +1,37 @@
+{
+  "id": "lm-switch",
+  "name": "LM Switch",
+  "svg": "svg/LM Switch.svg",
+  "category": "uncategorized",
+  "tags": [],
+  "defaults": {
+    "rotation": 0,
+    "scale": 1
+  },
+  "svg_meta": {
+    "viewBox": {
+      "minX": 0,
+      "minY": 0,
+      "width": 103.96,
+      "height": 183.77
+    },
+    "widthAttr": "103.96",
+    "heightAttr": "183.77",
+    "widthPx": 103.96,
+    "heightPx": 183.77,
+    "aspect": 0.5657071339173967
+  },
+  "ports": [
+    {
+      "id": "signal",
+      "type": "18_gauge",
+      "x": 0.5,
+      "y": 0.92
+    }
+  ],
+  "physical_in": {
+    "w": 0.993,
+    "h": 1.755
+  },
+  "physical_in_source": "scaled_from_pdh_reference_viewbox"
+}

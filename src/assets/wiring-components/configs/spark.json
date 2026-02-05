@@ -1,0 +1,61 @@
+{
+  "id": "spark",
+  "name": "Spark",
+  "svg": "svg/Spark.svg",
+  "category": "uncategorized",
+  "tags": [],
+  "defaults": {
+    "rotation": 0,
+    "scale": 1
+  },
+  "svg_meta": {
+    "viewBox": {
+      "minX": 0,
+      "minY": 0,
+      "width": 188.14,
+      "height": 123.73
+    },
+    "widthAttr": "188.14",
+    "heightAttr": "123.73",
+    "widthPx": 188.14,
+    "heightPx": 123.73,
+    "aspect": 1.520568980845389
+  },
+  "ports": [
+    {
+      "id": "pdh_in_pos",
+      "type": "12_gauge",
+      "x": 0.1,
+      "y": 0.3
+    },
+    {
+      "id": "pdh_in_neg",
+      "type": "12_gauge",
+      "x": 0.1,
+      "y": 0.4
+    },
+    {
+      "id": "motor_out_a",
+      "type": "12_gauge",
+      "x": 0.9,
+      "y": 0.3
+    },
+    {
+      "id": "motor_out_b",
+      "type": "12_gauge",
+      "x": 0.9,
+      "y": 0.4
+    },
+    {
+      "id": "pwm",
+      "type": "18_gauge",
+      "x": 0.1,
+      "y": 0.75
+    }
+  ],
+  "physical_in": {
+    "w": 2.86,
+    "h": 1.875
+  },
+  "physical_in_source": "scaled_from_pdh_reference_viewbox"
+}

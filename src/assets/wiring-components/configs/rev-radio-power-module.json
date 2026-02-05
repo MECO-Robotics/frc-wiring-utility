@@ -1,0 +1,43 @@
+{
+  "id": "rev-radio-power-module",
+  "name": "REV Radio Power Module",
+  "svg": "svg/REV Radio Power Module.svg",
+  "category": "uncategorized",
+  "tags": [],
+  "defaults": {
+    "rotation": 0,
+    "scale": 1
+  },
+  "svg_meta": {
+    "viewBox": {
+      "minX": 0,
+      "minY": 0,
+      "width": 390.05,
+      "height": 145.74
+    },
+    "widthAttr": "390.05",
+    "heightAttr": "145.74",
+    "widthPx": 390.05,
+    "heightPx": 145.74,
+    "aspect": 2.676341429943735
+  },
+  "ports": [
+    {
+      "id": "pdh_in",
+      "type": "18_gauge",
+      "x": 0.1,
+      "y": 0.35
+    },
+    {
+      "id": "radio_out",
+      "type": "18_gauge",
+      "x": 0.9,
+      "y": 0.35
+    }
+  ],
+  "physical_in": {
+    "w": 3.724,
+    "h": 1.392
+  },
+  "physical_in_source": "scaled_from_pdh_reference_viewbox"
+}

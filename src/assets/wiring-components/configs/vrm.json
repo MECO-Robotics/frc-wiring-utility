@@ -1,0 +1,50 @@
+{
+  "id": "vrm",
+  "name": "VRM",
+  "svg": "svg/VRM.svg",
+  "category": "uncategorized",
+  "tags": [],
+  "defaults": {
+    "rotation": 0,
+    "scale": 1
+  },
+  "svg_meta": {
+    "viewBox": {
+      "minX": 0,
+      "minY": 0,
+      "width": 179.3,
+      "height": 193.72
+    },
+    "widthAttr": "179.3",
+    "heightAttr": "193.72",
+    "widthPx": 179.3,
+    "heightPx": 193.72,
+    "aspect": 0.9255626677679125
+  },
+  "ports": [
+    {
+      "id": "pdh_in",
+      "type": "18_gauge",
+      "x": 0.1,
+      "y": 0.25
+    },
+    {
+      "id": "out_5v",
+      "type": "18_gauge",
+      "x": 0.9,
+      "y": 0.35
+    },
+    {
+      "id": "out_12v",
+      "type": "18_gauge",
+      "x": 0.9,
+      "y": 0.5
+    }
+  ],
+  "physical_in": {
+    "w": 2.22,
+    "h": 2.03,
+    "t": 0.784
+  },
+  "physical_in_source": "ctre_vrm_users_guide"
+}

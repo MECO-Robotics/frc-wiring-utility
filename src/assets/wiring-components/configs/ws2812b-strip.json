@@ -1,0 +1,43 @@
+{
+  "id": "ws2812b-strip",
+  "name": "WS2812B Strip",
+  "svg": "svg/WS2812B Strip.svg",
+  "category": "uncategorized",
+  "tags": [],
+  "defaults": {
+    "rotation": 0,
+    "scale": 1
+  },
+  "svg_meta": {
+    "viewBox": {
+      "minX": 0,
+      "minY": 0,
+      "width": 175.44,
+      "height": 22.86
+    },
+    "widthAttr": "175.44",
+    "heightAttr": "22.86",
+    "widthPx": 175.44,
+    "heightPx": 22.86,
+    "aspect": 7.6745406824146984
+  },
+  "ports": [
+    {
+      "id": "in",
+      "type": "18_gauge",
+      "x": 0.1,
+      "y": 0.5
+    },
+    {
+      "id": "out",
+      "type": "18_gauge",
+      "x": 0.9,
+      "y": 0.5
+    }
+  ],
+  "physical_in": {
+    "w": 1.675,
+    "h": 0.218
+  },
+  "physical_in_source": "scaled_from_pdh_reference_viewbox"
+}

@@ -1,0 +1,67 @@
+{
+  "id": "rev-spark-max",
+  "name": "REV Spark MAX",
+  "svg": "svg/REV Spark MAX.svg",
+  "category": "uncategorized",
+  "tags": [],
+  "defaults": {
+    "rotation": 0,
+    "scale": 1
+  },
+  "svg_meta": {
+    "viewBox": {
+      "minX": 0,
+      "minY": 0,
+      "width": 264.82,
+      "height": 135.78
+    },
+    "widthAttr": "264.82",
+    "heightAttr": "135.78",
+    "widthPx": 264.82,
+    "heightPx": 135.78,
+    "aspect": 1.9503608778907056
+  },
+  "ports": [
+    {
+      "id": "pdh_in_pos",
+      "type": "12_gauge",
+      "x": 0.1,
+      "y": 0.25
+    },
+    {
+      "id": "pdh_in_neg",
+      "type": "12_gauge",
+      "x": 0.1,
+      "y": 0.35
+    },
+    {
+      "id": "motor_out_a",
+      "type": "12_gauge",
+      "x": 0.9,
+      "y": 0.25
+    },
+    {
+      "id": "motor_out_b",
+      "type": "12_gauge",
+      "x": 0.9,
+      "y": 0.35
+    },
+    {
+      "id": "signal",
+      "type": "18_gauge",
+      "x": 0.1,
+      "y": 0.55
+    },
+    {
+      "id": "usb",
+      "type": "usb",
+      "x": 0.1,
+      "y": 0.75
+    }
+  ],
+  "physical_in": {
+    "w": 2.529,
+    "h": 1.296
+  },
+  "physical_in_source": "scaled_from_pdh_reference_viewbox"
+}

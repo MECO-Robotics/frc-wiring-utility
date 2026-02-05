@@ -1,0 +1,86 @@
+{
+  "id": "pdh-no-fuses",
+  "name": "PDH (No Fuses)",
+  "svg": "svg/PDH (No Fuses).svg",
+  "category": "uncategorized",
+  "tags": [],
+  "defaults": {
+    "rotation": 0,
+    "scale": 1
+  },
+  "svg_meta": {
+    "viewBox": {
+      "minX": 0,
+      "minY": 0,
+      "width": 463.36,
+      "height": 920.75
+    },
+    "widthAttr": "463.36",
+    "heightAttr": "920.75",
+    "widthPx": 463.36,
+    "heightPx": 920.75,
+    "aspect": 0.5032419223459137
+  },
+  "ports": [
+    {
+      "id": "main_in_pos",
+      "type": "4_gauge",
+      "x": 0.1,
+      "y": 0.2
+    },
+    {
+      "id": "main_in_neg",
+      "type": "4_gauge",
+      "x": 0.1,
+      "y": 0.35
+    },
+    {
+      "id": "branch_out_12g_1",
+      "type": "12_gauge",
+      "x": 0.9,
+      "y": 0.2
+    },
+    {
+      "id": "branch_out_12g_2",
+      "type": "12_gauge",
+      "x": 0.9,
+      "y": 0.3
+    },
+    {
+      "id": "branch_out_12g_3",
+      "type": "12_gauge",
+      "x": 0.9,
+      "y": 0.4
+    },
+    {
+      "id": "branch_out_12g_4",
+      "type": "12_gauge",
+      "x": 0.9,
+      "y": 0.5
+    },
+    {
+      "id": "branch_out_12g_5",
+      "type": "12_gauge",
+      "x": 0.9,
+      "y": 0.6
+    },
+    {
+      "id": "branch_out_12g_6",
+      "type": "12_gauge",
+      "x": 0.9,
+      "y": 0.7
+    },
+    {
+      "id": "aux_out_18g",
+      "type": "18_gauge",
+      "x": 0.1,
+      "y": 0.7
+    }
+  ],
+  "physical_in": {
+    "w": 4.38,
+    "h": 8.88,
+    "t": 1.56
+  },
+  "physical_in_source": "rev_pdh_drawing"
+}

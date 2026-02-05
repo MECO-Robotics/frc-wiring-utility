@@ -1,0 +1,61 @@
+{
+  "id": "talon-srx",
+  "name": "Talon SRX",
+  "svg": "svg/Talon SRX.svg",
+  "category": "uncategorized",
+  "tags": [],
+  "defaults": {
+    "rotation": 0,
+    "scale": 1
+  },
+  "svg_meta": {
+    "viewBox": {
+      "minX": 0,
+      "minY": 0,
+      "width": 261.85,
+      "height": 113.72
+    },
+    "widthAttr": "261.85",
+    "heightAttr": "113.72",
+    "widthPx": 261.85,
+    "heightPx": 113.72,
+    "aspect": 2.3025852972212455
+  },
+  "ports": [
+    {
+      "id": "pdh_in_pos",
+      "type": "12_gauge",
+      "x": 0.1,
+      "y": 0.25
+    },
+    {
+      "id": "pdh_in_neg",
+      "type": "12_gauge",
+      "x": 0.1,
+      "y": 0.35
+    },
+    {
+      "id": "motor_out_a",
+      "type": "12_gauge",
+      "x": 0.9,
+      "y": 0.25
+    },
+    {
+      "id": "motor_out_b",
+      "type": "12_gauge",
+      "x": 0.9,
+      "y": 0.35
+    },
+    {
+      "id": "signal",
+      "type": "18_gauge",
+      "x": 0.1,
+      "y": 0.6
+    }
+  ],
+  "physical_in": {
+    "w": 2.5,
+    "h": 1.086
+  },
+  "physical_in_source": "scaled_from_pdh_reference_viewbox"
+}

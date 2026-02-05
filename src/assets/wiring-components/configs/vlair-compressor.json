@@ -1,0 +1,37 @@
+{
+  "id": "vlair-compressor",
+  "name": "Vlair Compressor",
+  "svg": "svg/Vlair Compressor.svg",
+  "category": "uncategorized",
+  "tags": [],
+  "defaults": {
+    "rotation": 0,
+    "scale": 1
+  },
+  "svg_meta": {
+    "viewBox": {
+      "minX": 0,
+      "minY": 0,
+      "width": 290.57,
+      "height": 226.74
+    },
+    "widthAttr": "290.57",
+    "heightAttr": "226.74",
+    "widthPx": 290.57,
+    "heightPx": 226.74,
+    "aspect": 1.2815118638087677
+  },
+  "ports": [
+    {
+      "id": "power",
+      "type": "12_gauge",
+      "x": 0.1,
+      "y": 0.85
+    }
+  ],
+  "physical_in": {
+    "w": 2.775,
+    "h": 2.165
+  },
+  "physical_in_source": "scaled_from_pdh_reference_viewbox"
+}

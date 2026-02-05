@@ -1,0 +1,49 @@
+{
+  "id": "vh-109-radio",
+  "name": "VH 109 Radio",
+  "svg": "svg/VH-109 Radio.svg",
+  "category": "uncategorized",
+  "tags": [],
+  "defaults": {
+    "rotation": 0,
+    "scale": 1
+  },
+  "svg_meta": {
+    "viewBox": {
+      "minX": 0,
+      "minY": 0,
+      "width": 456.57,
+      "height": 210.03
+    },
+    "widthAttr": "456.57",
+    "heightAttr": "210.03",
+    "widthPx": 456.57,
+    "heightPx": 210.03,
+    "aspect": 2.173832309670047
+  },
+  "ports": [
+    {
+      "id": "power",
+      "type": "18_gauge",
+      "x": 0.1,
+      "y": 0.2
+    },
+    {
+      "id": "ethernet_1",
+      "type": "ethernet",
+      "x": 0.9,
+      "y": 0.3
+    },
+    {
+      "id": "ethernet_2",
+      "type": "ethernet",
+      "x": 0.9,
+      "y": 0.45
+    }
+  ],
+  "physical_in": {
+    "w": 4.36,
+    "h": 2.005
+  },
+  "physical_in_source": "scaled_from_pdh_reference_viewbox"
+}

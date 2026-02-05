@@ -1,0 +1,43 @@
+{
+  "id": "10a-automotive-fuse",
+  "name": "10A Automotive Fuse",
+  "svg": "svg/10A Automotive Fuse.svg",
+  "category": "uncategorized",
+  "tags": [],
+  "defaults": {
+    "rotation": 0,
+    "scale": 1
+  },
+  "svg_meta": {
+    "viewBox": {
+      "minX": 0,
+      "minY": 0,
+      "width": 52.96,
+      "height": 12.71
+    },
+    "widthAttr": "52.96",
+    "heightAttr": "12.71",
+    "widthPx": 52.96,
+    "heightPx": 12.71,
+    "aspect": 4.166797797010228
+  },
+  "ports": [
+    {
+      "id": "in",
+      "type": "12_gauge",
+      "x": 0.1,
+      "y": 0.5
+    },
+    {
+      "id": "out",
+      "type": "12_gauge",
+      "x": 0.9,
+      "y": 0.5
+    }
+  ],
+  "physical_in": {
+    "w": 0.506,
+    "h": 0.121
+  },
+  "physical_in_source": "scaled_from_pdh_reference_viewbox"
+}

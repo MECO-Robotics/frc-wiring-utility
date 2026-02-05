@@ -1,0 +1,37 @@
+{
+  "id": "koors-40",
+  "name": "Koors 40",
+  "svg": "svg/Koors 40.svg",
+  "category": "uncategorized",
+  "tags": [],
+  "defaults": {
+    "rotation": 0,
+    "scale": 1
+  },
+  "svg_meta": {
+    "viewBox": {
+      "minX": 0,
+      "minY": 0,
+      "width": 301.53,
+      "height": 127
+    },
+    "widthAttr": "301.53",
+    "heightAttr": "127",
+    "widthPx": 301.53,
+    "heightPx": 127,
+    "aspect": 2.3742519685039367
+  },
+  "ports": [
+    {
+      "id": "motor_power",
+      "type": "12_gauge",
+      "x": 0.5,
+      "y": 0.92
+    }
+  ],
+  "physical_in": {
+    "w": 2.879,
+    "h": 1.213
+  },
+  "physical_in_source": "scaled_from_pdh_reference_viewbox"
+}

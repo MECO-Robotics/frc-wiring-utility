@@ -1,0 +1,37 @@
+{
+  "id": "c270-camera",
+  "name": "C270 Camera",
+  "svg": "svg/C270 Camera.svg",
+  "category": "uncategorized",
+  "tags": [],
+  "defaults": {
+    "rotation": 0,
+    "scale": 1
+  },
+  "svg_meta": {
+    "viewBox": {
+      "minX": 0,
+      "minY": 0,
+      "width": 177.31,
+      "height": 77.86
+    },
+    "widthAttr": "177.31",
+    "heightAttr": "77.86",
+    "widthPx": 177.31,
+    "heightPx": 77.86,
+    "aspect": 2.2772925764192142
+  },
+  "ports": [
+    {
+      "id": "usb",
+      "type": "usb",
+      "x": 0.1,
+      "y": 0.8
+    }
+  ],
+  "physical_in": {
+    "w": 1.693,
+    "h": 0.743
+  },
+  "physical_in_source": "scaled_from_pdh_reference_viewbox"
+}

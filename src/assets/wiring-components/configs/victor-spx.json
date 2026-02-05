@@ -1,0 +1,61 @@
+{
+  "id": "victor-spx",
+  "name": "Victor SPX",
+  "svg": "svg/Victor SPX.svg",
+  "category": "uncategorized",
+  "tags": [],
+  "defaults": {
+    "rotation": 0,
+    "scale": 1
+  },
+  "svg_meta": {
+    "viewBox": {
+      "minX": 0,
+      "minY": 0,
+      "width": 239.09,
+      "height": 110.94
+    },
+    "widthAttr": "239.09",
+    "heightAttr": "110.94",
+    "widthPx": 239.09,
+    "heightPx": 110.94,
+    "aspect": 2.155128898503696
+  },
+  "ports": [
+    {
+      "id": "pdh_in_pos",
+      "type": "12_gauge",
+      "x": 0.1,
+      "y": 0.25
+    },
+    {
+      "id": "pdh_in_neg",
+      "type": "12_gauge",
+      "x": 0.1,
+      "y": 0.35
+    },
+    {
+      "id": "motor_out_a",
+      "type": "12_gauge",
+      "x": 0.9,
+      "y": 0.25
+    },
+    {
+      "id": "motor_out_b",
+      "type": "12_gauge",
+      "x": 0.9,
+      "y": 0.35
+    },
+    {
+      "id": "signal",
+      "type": "18_gauge",
+      "x": 0.1,
+      "y": 0.6
+    }
+  ],
+  "physical_in": {
+    "w": 2.283,
+    "h": 1.059
+  },
+  "physical_in_source": "scaled_from_pdh_reference_viewbox"
+}

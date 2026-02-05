@@ -1,0 +1,37 @@
+{
+  "id": "neo-vortex",
+  "name": "NEO Vortex",
+  "svg": "svg/NEO Vortex.svg",
+  "category": "uncategorized",
+  "tags": [],
+  "defaults": {
+    "rotation": 0,
+    "scale": 1
+  },
+  "svg_meta": {
+    "viewBox": {
+      "minX": 0,
+      "minY": 0,
+      "width": 282.99,
+      "height": 180.32
+    },
+    "widthAttr": "282.99",
+    "heightAttr": "180.32",
+    "widthPx": 282.99,
+    "heightPx": 180.32,
+    "aspect": 1.569376663708962
+  },
+  "ports": [
+    {
+      "id": "motor_power",
+      "type": "12_gauge",
+      "x": 0.5,
+      "y": 0.92
+    }
+  ],
+  "physical_in": {
+    "w": 3.14,
+    "h": 2.36
+  },
+  "physical_in_source": "scaled_from_pdh_reference_viewbox"
+}

@@ -1,0 +1,43 @@
+{
+  "id": "ctre-minion",
+  "name": "CTRE Minion",
+  "svg": "svg/CTRE Minion.svg",
+  "category": "uncategorized",
+  "tags": [],
+  "defaults": {
+    "rotation": 0,
+    "scale": 1
+  },
+  "svg_meta": {
+    "viewBox": {
+      "minX": 0,
+      "minY": 0,
+      "width": 451,
+      "height": 858
+    },
+    "widthAttr": "100%",
+    "heightAttr": "100%",
+    "widthPx": 451,
+    "heightPx": 858,
+    "aspect": 0.5256410256410257
+  },
+  "ports": [
+    {
+      "id": "pwr_in",
+      "type": "18_gauge",
+      "x": 0.1,
+      "y": 0.2
+    },
+    {
+      "id": "usb",
+      "type": "usb",
+      "x": 0.1,
+      "y": 0.5
+    }
+  ],
+  "physical_in": {
+    "w": 1.5,
+    "h": 2.85
+  },
+  "physical_in_source": "scaled_from_pdh_reference_viewbox"
+}

@@ -1,0 +1,67 @@
+{
+  "id": "rev-pneumatic-hub",
+  "name": "REV Pneumatic Hub",
+  "svg": "svg/REV Pneumatic Hub.svg",
+  "category": "uncategorized",
+  "tags": [],
+  "defaults": {
+    "rotation": 0,
+    "scale": 1
+  },
+  "svg_meta": {
+    "viewBox": {
+      "minX": 0,
+      "minY": 0,
+      "width": 438.43,
+      "height": 188.83
+    },
+    "widthAttr": "438.43",
+    "heightAttr": "188.83",
+    "widthPx": 438.43,
+    "heightPx": 188.83,
+    "aspect": 2.321823862733676
+  },
+  "ports": [
+    {
+      "id": "pwr_in",
+      "type": "18_gauge",
+      "x": 0.1,
+      "y": 0.2
+    },
+    {
+      "id": "can",
+      "type": "18_gauge",
+      "x": 0.1,
+      "y": 0.35
+    },
+    {
+      "id": "solenoid_1",
+      "type": "18_gauge",
+      "x": 0.9,
+      "y": 0.2
+    },
+    {
+      "id": "solenoid_2",
+      "type": "18_gauge",
+      "x": 0.9,
+      "y": 0.3
+    },
+    {
+      "id": "solenoid_3",
+      "type": "18_gauge",
+      "x": 0.9,
+      "y": 0.4
+    },
+    {
+      "id": "solenoid_4",
+      "type": "18_gauge",
+      "x": 0.9,
+      "y": 0.5
+    }
+  ],
+  "physical_in": {
+    "w": 4.38,
+    "h": 1.88
+  },
+  "physical_in_source": "rev_ph_drawing"
+}

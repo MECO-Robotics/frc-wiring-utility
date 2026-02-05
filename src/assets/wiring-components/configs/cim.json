@@ -1,0 +1,37 @@
+{
+  "id": "cim",
+  "name": "CIM",
+  "svg": "svg/CIM.svg",
+  "category": "uncategorized",
+  "tags": [],
+  "defaults": {
+    "rotation": 0,
+    "scale": 1
+  },
+  "svg_meta": {
+    "viewBox": {
+      "minX": 0,
+      "minY": 0,
+      "width": 733,
+      "height": 1771
+    },
+    "widthAttr": "100%",
+    "heightAttr": "100%",
+    "widthPx": 733,
+    "heightPx": 1771,
+    "aspect": 0.4138904573687182
+  },
+  "ports": [
+    {
+      "id": "motor_leads",
+      "type": "12_gauge",
+      "x": 0.5,
+      "y": 0.92
+    }
+  ],
+  "physical_in": {
+    "w": 2.5,
+    "h": 5.77
+  },
+  "physical_in_source": "scaled_from_pdh_reference_viewbox"
+}

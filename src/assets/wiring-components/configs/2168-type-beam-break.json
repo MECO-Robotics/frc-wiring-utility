@@ -1,0 +1,37 @@
+{
+  "id": "2168-type-beam-break",
+  "name": "2168 Type Beam Break",
+  "svg": "svg/2168 Type Beam Break.svg",
+  "category": "uncategorized",
+  "tags": [],
+  "defaults": {
+    "rotation": 0,
+    "scale": 1
+  },
+  "svg_meta": {
+    "viewBox": {
+      "minX": 0,
+      "minY": 0,
+      "width": 114.02,
+      "height": 74.49
+    },
+    "widthAttr": "114.02",
+    "heightAttr": "74.49",
+    "widthPx": 114.02,
+    "heightPx": 74.49,
+    "aspect": 1.5306752584239496
+  },
+  "ports": [
+    {
+      "id": "signal",
+      "type": "18_gauge",
+      "x": 0.1,
+      "y": 0.85
+    }
+  ],
+  "physical_in": {
+    "w": 1.089,
+    "h": 0.711
+  },
+  "physical_in_source": "scaled_from_pdh_reference_viewbox"
+}

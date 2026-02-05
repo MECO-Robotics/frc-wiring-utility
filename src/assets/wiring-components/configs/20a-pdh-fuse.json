@@ -1,0 +1,43 @@
+{
+  "id": "20a-pdh-fuse",
+  "name": "20A PDH Fuse",
+  "svg": "svg/20A PDH Fuse.svg",
+  "category": "uncategorized",
+  "tags": [],
+  "defaults": {
+    "rotation": 0,
+    "scale": 1
+  },
+  "svg_meta": {
+    "viewBox": {
+      "minX": 0,
+      "minY": 0,
+      "width": 83.74,
+      "height": 40.18
+    },
+    "widthAttr": "83.74",
+    "heightAttr": "40.18",
+    "widthPx": 83.74,
+    "heightPx": 40.18,
+    "aspect": 2.0841214534594323
+  },
+  "ports": [
+    {
+      "id": "in",
+      "type": "12_gauge",
+      "x": 0.1,
+      "y": 0.5
+    },
+    {
+      "id": "out",
+      "type": "12_gauge",
+      "x": 0.9,
+      "y": 0.5
+    }
+  ],
+  "physical_in": {
+    "w": 0.8,
+    "h": 0.384
+  },
+  "physical_in_source": "scaled_from_pdh_reference_viewbox"
+}

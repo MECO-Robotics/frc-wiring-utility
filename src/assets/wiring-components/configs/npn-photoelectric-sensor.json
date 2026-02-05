@@ -1,0 +1,37 @@
+{
+  "id": "npn-photoelectric-sensor",
+  "name": "NPN Photoelectric Sensor",
+  "svg": "svg/NPN Photoelectric Sensor.svg",
+  "category": "uncategorized",
+  "tags": [],
+  "defaults": {
+    "rotation": 0,
+    "scale": 1
+  },
+  "svg_meta": {
+    "viewBox": {
+      "minX": 0,
+      "minY": 0,
+      "width": 77.07,
+      "height": 210.8
+    },
+    "widthAttr": "77.07",
+    "heightAttr": "210.8",
+    "widthPx": 77.07,
+    "heightPx": 210.8,
+    "aspect": 0.3656072106261859
+  },
+  "ports": [
+    {
+      "id": "signal",
+      "type": "18_gauge",
+      "x": 0.5,
+      "y": 0.92
+    }
+  ],
+  "physical_in": {
+    "w": 0.736,
+    "h": 2.013
+  },
+  "physical_in_source": "scaled_from_pdh_reference_viewbox"
+}

@@ -1,0 +1,43 @@
+{
+  "id": "120a-fuse",
+  "name": "120A Fuse",
+  "svg": "svg/120A Fuse.svg",
+  "category": "uncategorized",
+  "tags": [],
+  "defaults": {
+    "rotation": 0,
+    "scale": 1
+  },
+  "svg_meta": {
+    "viewBox": {
+      "minX": 0,
+      "minY": 0,
+      "width": 169.75,
+      "height": 259.75
+    },
+    "widthAttr": "169.75",
+    "heightAttr": "259.75",
+    "widthPx": 169.75,
+    "heightPx": 259.75,
+    "aspect": 0.6535129932627527
+  },
+  "ports": [
+    {
+      "id": "battery_in",
+      "type": "4_gauge",
+      "x": 0.5,
+      "y": 0.08
+    },
+    {
+      "id": "pdh_out",
+      "type": "4_gauge",
+      "x": 0.5,
+      "y": 0.92
+    }
+  ],
+  "physical_in": {
+    "w": 1.621,
+    "h": 2.48
+  },
+  "physical_in_source": "scaled_from_pdh_reference_viewbox"
+}

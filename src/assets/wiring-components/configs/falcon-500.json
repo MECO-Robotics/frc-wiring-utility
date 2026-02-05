@@ -1,0 +1,37 @@
+{
+  "id": "falcon-500",
+  "name": "Falcon 500",
+  "svg": "svg/Falcon 500.svg",
+  "category": "uncategorized",
+  "tags": [],
+  "defaults": {
+    "rotation": 0,
+    "scale": 1
+  },
+  "svg_meta": {
+    "viewBox": {
+      "minX": 0,
+      "minY": 0,
+      "width": 289.83,
+      "height": 178.6
+    },
+    "widthAttr": "289.83",
+    "heightAttr": "178.6",
+    "widthPx": 289.83,
+    "heightPx": 178.6,
+    "aspect": 1.6227883538633818
+  },
+  "ports": [
+    {
+      "id": "motor_power",
+      "type": "12_gauge",
+      "x": 0.5,
+      "y": 0.92
+    }
+  ],
+  "physical_in": {
+    "w": 3.4,
+    "h": 2.36
+  },
+  "physical_in_source": "scaled_from_pdh_reference_viewbox"
+}

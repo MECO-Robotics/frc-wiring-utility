@@ -1,0 +1,37 @@
+{
+  "id": "ttb-analog-encoder",
+  "name": "TTB Analog Encoder",
+  "svg": "svg/TTB Analog Encoder.svg",
+  "category": "uncategorized",
+  "tags": [],
+  "defaults": {
+    "rotation": 0,
+    "scale": 1
+  },
+  "svg_meta": {
+    "viewBox": {
+      "minX": 0,
+      "minY": 0,
+      "width": 74.33,
+      "height": 83.63
+    },
+    "widthAttr": "74.33",
+    "heightAttr": "83.63",
+    "widthPx": 74.33,
+    "heightPx": 83.63,
+    "aspect": 0.888795886643549
+  },
+  "ports": [
+    {
+      "id": "signal",
+      "type": "18_gauge",
+      "x": 0.5,
+      "y": 0.92
+    }
+  ],
+  "physical_in": {
+    "w": 0.71,
+    "h": 0.799
+  },
+  "physical_in_source": "scaled_from_pdh_reference_viewbox"
+}

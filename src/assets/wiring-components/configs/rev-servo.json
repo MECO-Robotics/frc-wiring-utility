@@ -1,0 +1,37 @@
+{
+  "id": "rev-servo",
+  "name": "REV Servo",
+  "svg": "svg/REV Servo.svg",
+  "category": "uncategorized",
+  "tags": [],
+  "defaults": {
+    "rotation": 0,
+    "scale": 1
+  },
+  "svg_meta": {
+    "viewBox": {
+      "minX": 0,
+      "minY": 0,
+      "width": 134.04,
+      "height": 107.66
+    },
+    "widthAttr": "134.04",
+    "heightAttr": "107.66",
+    "widthPx": 134.04,
+    "heightPx": 107.66,
+    "aspect": 1.2450306520527588
+  },
+  "ports": [
+    {
+      "id": "pwm",
+      "type": "18_gauge",
+      "x": 0.1,
+      "y": 0.8
+    }
+  ],
+  "physical_in": {
+    "w": 1.28,
+    "h": 1.028
+  },
+  "physical_in_source": "scaled_from_pdh_reference_viewbox"
+}
