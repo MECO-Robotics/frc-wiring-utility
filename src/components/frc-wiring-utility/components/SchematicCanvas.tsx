@@ -3,6 +3,7 @@ import type { DeviceType, Project } from "../types";
 import { CanvasNode } from "./CanvasNode";
 import { clamp, getPlacement, snapCenterToTopLeft, snapTopLeftByCenter } from "../helpers";
 import { PALETTE_BY_ID } from "../paletteLookup";
+import type { PortType } from "../palette";
 
 const PX_PER_IN = 60; // MUST match CanvasNode.tsx or your dragging/fit math won't match visuals.
 
@@ -31,6 +32,8 @@ export function SchematicCanvas(props: {
     NODE_H: number;
     onDropCreate: (type: DeviceType, x: number, y: number) => void;
     onMovePlacement: (deviceId: string, x: number, y: number) => void;
+    wireMode?: boolean;
+    onCreateWire?: (fromDeviceId: string, fromPortId: string, toDeviceId: string, toPortId: string, portType: PortType) => void;
     registerCenterFn?: (fn: () => void) => void;
 }) {
     const {
@@ -42,6 +45,8 @@ export function SchematicCanvas(props: {
         NODE_H,
         onDropCreate,
         onMovePlacement,
+        wireMode = false,
+        onCreateWire,
         registerCenterFn,
     } = props;
 
@@ -73,6 +78,16 @@ export function SchematicCanvas(props: {
         nodeH: number;
     } | null>(null);
 
+    type WireDrag = {
+        fromDeviceId: string;
+        fromPortId: string;
+        fromPortType: PortType;
+        pointerSx: number; // canvas-local screen coords
+        pointerSy: number;
+    };
+
+    const [wireDrag, setWireDrag] = useState<WireDrag | null>(null);
+
     const canvasPointFromEvent = (clientX: number, clientY: number) => {
         const el = canvasRef.current;
         if (!el) return { x: 0, y: 0 };
@@ -81,6 +96,65 @@ export function SchematicCanvas(props: {
     };
 
     const screenToWorld = (sx: number, sy: number) => ({ x: (sx - pan.x) / zoom, y: (sy - pan.y) / zoom });
+
+    const worldToScreen = (x: number, y: number) => ({ sx: x * zoom + pan.x, sy: y * zoom + pan.y });
+
+    const portWorld = (deviceId: string, portId: string) => {
+        const d = project.devices.find((x) => x.id === deviceId);
+        if (!d) return null;
+        const pl = getPlacement(project, deviceId);
+        if (!pl) return null;
+
+        const item = PALETTE_BY_ID.get(d.type as any);
+        if (!item) return null;
+
+        const port = item.ports.find((p) => p.id === portId);
+        if (!port) return null;
+
+        const { w: nodeW, h: nodeH } = nodeSizePx(d.type, (pl as any).scale, NODE_W, NODE_H);
+        return { x: pl.x + port.x * nodeW, y: pl.y + port.y * nodeH, portType: port.type as PortType };
+    };
+
+    const bezierPath = (ax: number, ay: number, bx: number, by: number) => {
+        const dx = Math.abs(bx - ax);
+        const c = Math.max(40, dx * 0.35);
+        const c1x = ax + c;
+        const c1y = ay;
+        const c2x = bx - c;
+        const c2y = by;
+        return `M ${ax} ${ay} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${bx} ${by}`;
+    };
+
+    const compatiblePortSet = React.useMemo(() => {
+        if (!wireDrag) return new Set<string>();
+        const set = new Set<string>();
+        for (const d of project.devices) {
+            const item = PALETTE_BY_ID.get(d.type as any);
+            if (!item) continue;
+            for (const p of item.ports) {
+                if (d.id === wireDrag.fromDeviceId && p.id === wireDrag.fromPortId) continue;
+                if ((p.type as PortType) === wireDrag.fromPortType) set.add(`${d.id}::${p.id}`);
+            }
+        }
+        return set;
+    }, [wireDrag, project.devices]);
+
+    const hitPortFromClientPoint = (clientX: number, clientY: number) => {
+        let el = document.elementFromPoint(clientX, clientY) as any;
+        while (el) {
+            if (el.getAttribute) {
+                const raw = el.getAttribute("data-node-port");
+                const pt = el.getAttribute("data-port-type");
+                if (raw && pt) {
+                    const [deviceId, portId] = String(raw).split(":");
+                    const portType = String(pt) as PortType;
+                    if (deviceId && portId && portType) return { deviceId, portId, portType };
+                }
+            }
+            el = el.parentNode;
+        }
+        return null;
+    };
 
     // ---------- Palette drop ----------
     const onCanvasDragOver = (e: React.DragEvent) => {
@@ -109,6 +183,14 @@ export function SchematicCanvas(props: {
     const onCanvasPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
         if (e.button !== 0) return;
 
+        // If in wire mode, only allow panning when clicking truly empty canvas.
+        // Also: never pan when starting on a node or port.
+        const target = e.target as HTMLElement | null;
+        const onPort = !!target?.closest?.("[data-node-port]");
+        const onNode = !!target?.closest?.("[data-node-root]");
+        if (onPort || onNode) return;
+        if (wireMode) return;
+
         (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
 
         panDragRef.current = {
@@ -122,6 +204,12 @@ export function SchematicCanvas(props: {
     };
 
     const onCanvasPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+        if (wireDrag) {
+            const pt = canvasPointFromEvent(e.clientX, e.clientY);
+            setWireDrag((prev) => (prev ? { ...prev, pointerSx: pt.x, pointerSy: pt.y } : prev));
+            return;
+        }
+
         const st = panDragRef.current;
         if (!st?.active) return;
 
@@ -133,14 +221,54 @@ export function SchematicCanvas(props: {
         setPan({ x: st.originPanX + dx, y: st.originPanY + dy });
     };
 
-    const onCanvasPointerUp = () => {
+    const onCanvasPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
         panDragRef.current = null;
+
+        if (wireDrag) {
+            // Attempt to finalize a wire on pointer up
+            const hit = hitPortFromClientPoint(e.clientX, e.clientY);
+            if (
+                hit &&
+                onCreateWire &&
+                hit.portType === wireDrag.fromPortType &&
+                !(hit.deviceId === wireDrag.fromDeviceId && hit.portId === wireDrag.fromPortId)
+            ) {
+                onCreateWire(
+                    wireDrag.fromDeviceId,
+                    wireDrag.fromPortId,
+                    hit.deviceId,
+                    hit.portId,
+                    wireDrag.fromPortType
+                );
+            }
+
+            setWireDrag(null);
+        }
     };
 
     const onCanvasClick = () => {
         const st = panDragRef.current;
         if (st?.moved) return;
         setSelectedDeviceId(null);
+    };
+
+    const onPortPointerDown = (e: React.PointerEvent, deviceId: string, portId: string) => {
+        if (!wireMode) return;
+        e.stopPropagation();
+        const w = portWorld(deviceId, portId);
+        if (!w) return;
+
+        // Capture on the CANVAS so canvas move/up handlers always fire during wire drag.
+        canvasRef.current?.setPointerCapture?.(e.pointerId);
+        const pt = canvasPointFromEvent(e.clientX, e.clientY);
+        setWireDrag({
+            fromDeviceId: deviceId,
+            fromPortId: portId,
+            fromPortType: w.portType,
+            pointerSx: pt.x,
+            pointerSy: pt.y,
+        });
+        setSelectedDeviceId(deviceId);
     };
 
     // ---------- Zoom (wheel, anchored at cursor) ----------
@@ -164,6 +292,7 @@ export function SchematicCanvas(props: {
 
     // ---------- Node dragging ----------
     const onNodePointerDown = (e: React.PointerEvent, deviceId: string) => {
+        if (wireMode) return;
         const pl = getPlacement(project, deviceId);
         if (!pl) return;
 
@@ -296,7 +425,7 @@ export function SchematicCanvas(props: {
                 onDrop={onCanvasDrop}
                 onPointerDown={onCanvasPointerDown}
                 onPointerMove={onCanvasPointerMove}
-                onPointerUp={onCanvasPointerUp}
+                onPointerUp={(e) => { onCanvasPointerUp(e); }}
                 onClick={onCanvasClick}
                 onContextMenu={(e) => e.preventDefault()}
                 onWheel={onWheel}
@@ -308,13 +437,57 @@ export function SchematicCanvas(props: {
                 style={{
                     backgroundSize: `${gridPx}px ${gridPx}px`,
                     backgroundPosition: `${pan.x}px ${pan.y}px`,
-                    cursor: panDragRef.current?.active ? "grabbing" : "grab",
+                    cursor: wireMode ? "crosshair" : (panDragRef.current?.active ? "grabbing" : "grab"),
                     touchAction: "none",
                 }}
             >
                 <div className="absolute right-3 top-3 z-10 rounded-xl border bg-background/80 px-2 py-1 text-xs text-muted-foreground backdrop-blur">
                     Zoom: {Math.round(zoom * 100)}%
                 </div>
+
+                {/* Wires overlay (screen-space). Endpoints computed from placements so wires move with components. */}
+                <svg
+                    className="absolute inset-0"
+                    style={{ width: "100%", height: "100%", pointerEvents: "none" }}
+                >
+                    {project.connections.map((c) => {
+                        const a = portWorld(c.from.deviceId, c.from.port);
+                        const b = portWorld(c.to.deviceId, c.to.port);
+                        if (!a || !b) return null;
+
+                        const as = worldToScreen(a.x, a.y);
+                        const bs = worldToScreen(b.x, b.y);
+
+                        return (
+                            <path
+                                key={c.id}
+                                d={bezierPath(as.sx, as.sy, bs.sx, bs.sy)}
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth={3}
+                                strokeLinecap="round"
+                                opacity={0.9}
+                            />
+                        );
+                    })}
+
+                    {wireDrag ? (() => {
+                        const a = portWorld(wireDrag.fromDeviceId, wireDrag.fromPortId);
+                        if (!a) return null;
+                        const as = worldToScreen(a.x, a.y);
+                        return (
+                            <path
+                                d={bezierPath(as.sx, as.sy, wireDrag.pointerSx, wireDrag.pointerSy)}
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth={2}
+                                strokeLinecap="round"
+                                strokeDasharray="6 6"
+                                opacity={0.7}
+                            />
+                        );
+                    })() : null}
+                </svg>
 
                 {project.devices.length === 0 ? (
                     <div className="absolute inset-0 grid place-items-center">
@@ -343,6 +516,9 @@ export function SchematicCanvas(props: {
                             onNodePointerDown={onNodePointerDown}
                             onNodePointerMove={onNodePointerMove}
                             onNodePointerUp={onNodePointerUp}
+                            wireMode={wireMode}
+                            compatiblePortSet={compatiblePortSet}
+                            onPortPointerDown={onPortPointerDown}
                         />
                     ))}
                 </div>
@@ -350,7 +526,9 @@ export function SchematicCanvas(props: {
 
             <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
                 <div>Grid: {GRID}px • Pan: drag empty space • Zoom: mouse wheel • Snap is in world units</div>
-                <div>Next logical step: render connections as SVG paths using ports + node positions in world coords.</div>
+                <div>
+                    {wireMode ? "Wire mode: drag from a port to a matching port." : "Tip: enable Wire mode to route wires by dragging between ports."}
+                </div>
             </div>
         </div>
     );

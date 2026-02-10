@@ -31,6 +31,10 @@ export function CanvasNode(props: {
     selectedDeviceId: string | null;
     setSelectedDeviceId: (id: string | null) => void;
 
+    wireMode?: boolean;
+    compatiblePortSet?: Set<string>;
+    onPortPointerDown?: (e: React.PointerEvent, deviceId: string, portId: string) => void;
+
     onNodePointerDown: (e: React.PointerEvent, deviceId: string) => void;
     onNodePointerMove: (e: React.PointerEvent) => void;
     onNodePointerUp: () => void;
@@ -45,6 +49,9 @@ export function CanvasNode(props: {
         onNodePointerDown,
         onNodePointerMove,
         onNodePointerUp,
+        wireMode = false,
+        compatiblePortSet,
+        onPortPointerDown,
     } = props;
 
     const d = project.devices.find((x) => x.id === deviceId);
@@ -66,17 +73,21 @@ export function CanvasNode(props: {
                 height: nodeH,
                 left: pl.x,
                 top: pl.y,
-                cursor: "grab",
+                cursor: wireMode ? "default" : "grab",
             }}
             onPointerDown={(e) => {
+                // In wire mode, ports handle pointer down; node dragging is disabled upstream anyway.
+                if (wireMode) return;
                 e.stopPropagation();
                 onNodePointerDown(e, deviceId);
             }}
             onPointerMove={(e) => {
+                if (wireMode) return;
                 e.stopPropagation();
                 onNodePointerMove(e);
             }}
             onPointerUp={(e) => {
+                if (wireMode) return;
                 e.stopPropagation();
                 onNodePointerUp();
             }}
@@ -84,8 +95,16 @@ export function CanvasNode(props: {
                 e.stopPropagation();
                 setSelectedDeviceId(deviceId);
             }}
+            data-node-root="true"
         >
-            <SchematicNode device={d as any} selected={selected} />
+            <SchematicNode
+                device={d as any}
+                selected={selected}
+                wireMode={wireMode}
+                compatiblePortSet={compatiblePortSet}
+                onPortPointerDown={onPortPointerDown}
+                showPorts={wireMode}
+            />
         </div>
     );
 }

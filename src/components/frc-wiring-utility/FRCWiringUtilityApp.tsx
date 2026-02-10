@@ -2,9 +2,9 @@ import React, { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
-import type { Device, DeviceType, Project } from "./types";
+import type { Device, DeviceType, Project, NetKind } from "./types";
 import { DEFAULT } from "./defaults";
-import { PALETTE } from "./palette";
+import type { PortType } from "./palette";
 import { validate } from "./validation";
 import { deviceHasCanId, downloadText, removePlacement, snap, uid, upsertPlacement } from "./helpers";
 
@@ -25,6 +25,7 @@ export default function FRCWiringUtilityApp() {
 
     const [project, setProject] = useState<Project>(() => structuredClone(DEFAULT));
     const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(project.devices[0]?.id ?? null);
+    const [wireMode, setWireMode] = useState(false);
 
     const { theme, setTheme } = useTheme();
 
@@ -49,6 +50,61 @@ export default function FRCWiringUtilityApp() {
     };
 
     // CRUD (still centralized)
+    const netKindForPortType = (pt: PortType): NetKind => {
+        switch (pt) {
+            case "ethernet":
+                return "ETH";
+            case "usb":
+                return "USB";
+            case "4_gauge":
+            case "12_gauge":
+                return "POWER_12V";
+            case "18_gauge":
+            default:
+                // We don't have a generic "signal" kind in the schema; DIO is the least-wrong bucket.
+                return "DIO";
+        }
+    };
+
+    const addWire = (
+        fromDeviceId: string,
+        fromPortId: string,
+        toDeviceId: string,
+        toPortId: string,
+        portType: PortType
+    ) => {
+        const kind = netKindForPortType(portType);
+        const netId = `net:${kind}:${portType}`;
+
+        setProject((p) => {
+            // Ensure a net exists (stable id so imports/exports are deterministic)
+            const nets = p.nets.some((n) => n.id === netId)
+                ? p.nets
+                : [...p.nets, { id: netId, kind, name: `${kind} (${portType})` }];
+
+            // De-dupe: don't add exact same endpoints on same net (either direction)
+            const exists = p.connections.some(
+                (c) =>
+                    c.netId === netId &&
+                    ((c.from.deviceId === fromDeviceId && c.from.port === fromPortId && c.to.deviceId === toDeviceId && c.to.port === toPortId) ||
+                        (c.from.deviceId === toDeviceId && c.from.port === toPortId && c.to.deviceId === fromDeviceId && c.to.port === fromPortId))
+            );
+            if (exists) return { ...p, nets };
+
+            const connections = [
+                ...p.connections,
+                {
+                    id: uid("conn"),
+                    netId,
+                    from: { deviceId: fromDeviceId, port: fromPortId },
+                    to: { deviceId: toDeviceId, port: toPortId },
+                },
+            ];
+
+            return { ...p, nets, connections };
+        });
+    };
+
     const addDeviceAt = (type: DeviceType, x: number, y: number) => {
         const id = uid("dev");
         const d: Device = {
@@ -135,6 +191,8 @@ export default function FRCWiringUtilityApp() {
                 theme={theme}
                 onCenterView={() => centerFnRef.current?.()}
                 toggleTheme={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}
+                wireMode={wireMode}
+                onToggleWireMode={() => setWireMode((w) => !w)}
             />
 
             <div className="mx-auto grid max-w-7xl min-h-0 grid-cols-[1fr_360px] gap-3 p-3 overflow-hidden">
@@ -160,6 +218,8 @@ export default function FRCWiringUtilityApp() {
                             NODE_H={NODE_H}
                             onDropCreate={addDeviceAt}
                             onMovePlacement={movePlacement}
+                            wireMode={wireMode}
+                            onCreateWire={addWire}
                             registerCenterFn={(fn) => {
                                 centerFnRef.current = fn;
                             }}

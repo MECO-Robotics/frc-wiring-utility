@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Download, Upload, Moon, Sun, Crosshair } from "lucide-react";
+import { Download, Upload, Moon, Sun, Crosshair, Cable } from "lucide-react";
 import type { Project } from "../types";
 import { safeInt } from "../helpers";
 
@@ -23,6 +23,9 @@ export function TopBar(props: {
 
     // NEW
     onCenterView: () => void;
+
+    wireMode: boolean;
+    onToggleWireMode: () => void;
 }) {
     const {
         project,
@@ -36,7 +39,10 @@ export function TopBar(props: {
         warnsCount,
         theme,
         toggleTheme,
-        onCenterView } = props;
+        onCenterView,
+        wireMode,
+        onToggleWireMode,
+    } = props;
 
     return (
         <header className="sticky top-0 z-20 border-b bg-background/80 backdrop-blur">
@@ -111,6 +117,16 @@ export function TopBar(props: {
                     <Button variant="secondary" className="h-8" onClick={onCenterView} title="Center/fit (Space)">
                         <Crosshair className="mr-2 h-4 w-4" />
                         Center
+                    </Button>
+
+                    <Button
+                        variant={wireMode ? "default" : "secondary"}
+                        className="h-8"
+                        onClick={onToggleWireMode}
+                        title="Wire mode: drag from one port to a matching port"
+                    >
+                        <Cable className="mr-2 h-4 w-4" />
+                        {wireMode ? "Wire: On" : "Wire: Off"}
                     </Button>
 
 
