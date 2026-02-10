@@ -115,15 +115,48 @@ export function SchematicCanvas(props: {
         return { x: pl.x + port.x * nodeW, y: pl.y + port.y * nodeH, portType: port.type as PortType };
     };
 
-    const bezierPath = (ax: number, ay: number, bx: number, by: number) => {
-        const dx = Math.abs(bx - ax);
-        const c = Math.max(40, dx * 0.35);
-        const c1x = ax + c;
-        const c1y = ay;
-        const c2x = bx - c;
-        const c2y = by;
-        return `M ${ax} ${ay} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${bx} ${by}`;
-    };
+    type Pt = { x: number; y: number };
+
+    function snapToGrid(v: number, grid: number) {
+        if (!Number.isFinite(grid) || grid <= 0) return v;
+        return Math.round(v / grid) * grid;
+    }
+
+    function orthoRouteWorld(a: Pt, b: Pt, grid: number): Pt[] {
+        const dx = b.x - a.x;
+        const dy = b.y - a.y;
+
+        // If already aligned, straight shot.
+        if (Math.abs(dx) < 1e-6 || Math.abs(dy) < 1e-6) return [a, b];
+
+        // Choose whether to go H then V, or V then H.
+        // Heuristic: do the longer axis first (reduces “weird” near-port kinks).
+        const horizontalFirst = Math.abs(dx) >= Math.abs(dy);
+
+        if (horizontalFirst) {
+            const mx = snapToGrid((a.x + b.x) / 2, grid);
+            return [
+                a,
+                { x: mx, y: a.y }, // turn 1
+                { x: mx, y: b.y }, // turn 2
+                b,
+            ];
+        } else {
+            const my = snapToGrid((a.y + b.y) / 2, grid);
+            return [
+                a,
+                { x: a.x, y: my }, // turn 1
+                { x: b.x, y: my }, // turn 2
+                b,
+            ];
+        }
+    }
+
+    function polylineToSvgPathScreen(pts: { sx: number; sy: number }[]) {
+        if (pts.length === 0) return "";
+        const [p0, ...rest] = pts;
+        return `M ${p0.sx} ${p0.sy} ` + rest.map((p) => `L ${p.sx} ${p.sy}`).join(" ");
+    }
 
     const compatiblePortSet = React.useMemo(() => {
         if (!wireDrag) return new Set<string>();
@@ -447,7 +480,7 @@ export function SchematicCanvas(props: {
 
                 {/* Wires overlay (screen-space). Endpoints computed from placements so wires move with components. */}
                 <svg
-                    className="absolute inset-0"
+                    className="absolute inset-0 z-40"
                     style={{ width: "100%", height: "100%", pointerEvents: "none" }}
                 >
                     {project.connections.map((c) => {
@@ -455,17 +488,26 @@ export function SchematicCanvas(props: {
                         const b = portWorld(c.to.deviceId, c.to.port);
                         if (!a || !b) return null;
 
-                        const as = worldToScreen(a.x, a.y);
-                        const bs = worldToScreen(b.x, b.y);
+                        // Build orthogonal path in WORLD space
+                        const worldPts = orthoRouteWorld({ x: a.x, y: a.y }, { x: b.x, y: b.y }, GRID);
+
+                        // Convert to SCREEN space for overlay SVG
+                        const screenPts = worldPts.map((p) => {
+                            const s = worldToScreen(p.x, p.y);
+                            return { sx: s.sx, sy: s.sy };
+                        });
+
+                        const dpath = polylineToSvgPathScreen(screenPts);
 
                         return (
                             <path
                                 key={c.id}
-                                d={bezierPath(as.sx, as.sy, bs.sx, bs.sy)}
+                                d={dpath}
                                 fill="none"
                                 stroke="currentColor"
                                 strokeWidth={3}
                                 strokeLinecap="round"
+                                strokeLinejoin="round"
                                 opacity={0.9}
                             />
                         );
@@ -474,14 +516,27 @@ export function SchematicCanvas(props: {
                     {wireDrag ? (() => {
                         const a = portWorld(wireDrag.fromDeviceId, wireDrag.fromPortId);
                         if (!a) return null;
-                        const as = worldToScreen(a.x, a.y);
+
+                        // pointer is in SCREEN coords; convert to WORLD for routing
+                        const bWorld = screenToWorld(wireDrag.pointerSx, wireDrag.pointerSy);
+
+                        const worldPts = orthoRouteWorld({ x: a.x, y: a.y }, { x: bWorld.x, y: bWorld.y }, GRID);
+
+                        const screenPts = worldPts.map((p) => {
+                            const s = worldToScreen(p.x, p.y);
+                            return { sx: s.sx, sy: s.sy };
+                        });
+
+                        const dpath = polylineToSvgPathScreen(screenPts);
+
                         return (
                             <path
-                                d={bezierPath(as.sx, as.sy, wireDrag.pointerSx, wireDrag.pointerSy)}
+                                d={dpath}
                                 fill="none"
                                 stroke="currentColor"
                                 strokeWidth={2}
                                 strokeLinecap="round"
+                                strokeLinejoin="round"
                                 strokeDasharray="6 6"
                                 opacity={0.7}
                             />
@@ -498,7 +553,7 @@ export function SchematicCanvas(props: {
                 ) : null}
 
                 <div
-                    className="absolute inset-0"
+                    className="absolute inset-0 z-10"
                     style={{
                         transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
                         transformOrigin: "0 0",
@@ -522,9 +577,6 @@ export function SchematicCanvas(props: {
                         />
                     ))}
                 </div>
-            </div>
-
-            <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
                 <div>Grid: {GRID}px • Pan: drag empty space • Zoom: mouse wheel • Snap is in world units</div>
                 <div>
                     {wireMode ? "Wire mode: drag from a port to a matching port." : "Tip: enable Wire mode to route wires by dragging between ports."}

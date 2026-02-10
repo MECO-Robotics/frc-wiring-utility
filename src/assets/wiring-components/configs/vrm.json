@@ -42,8 +42,8 @@
     }
   ],
   "physical_in": {
-    "w": 2.22,
-    "h": 2.03,
+    "w": 2.03,
+    "h": 2.22,
     "t": 0.784
   },
   "physical_in_source": "ctre_vrm_users_guide"
