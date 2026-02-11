@@ -26,12 +26,15 @@ export type Net = {
 
 export type Endpoint = { deviceId: string; port: string };
 
+export type RoutePoint = { x: number; y: number };
+
 export type Connection = {
     id: string;
     netId: string;
     from: Endpoint;
     to: Endpoint;
     attrs?: { note?: string; breakerA?: number; wireAwg?: number };
+    route?: RoutePoint[]; // <= bend points in WORLD coords, excluding endpoints
 };
 
 export type PlacedDevice = {

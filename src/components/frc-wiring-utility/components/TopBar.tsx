@@ -21,7 +21,6 @@ export function TopBar(props: {
     theme: "light" | "dark";
     toggleTheme: () => void;
 
-    // NEW
     onCenterView: () => void;
 
     wireMode: boolean;
@@ -65,19 +64,25 @@ export function TopBar(props: {
                         <Input
                             className="h-8 w-20"
                             value={project.meta.team ?? ""}
-                            onChange={(e) => setProject((p) => ({ ...p, meta: { ...p.meta, team: e.target.value } }))}
+                            onChange={(e) =>
+                                setProject((p) => ({ ...p, meta: { ...p.meta, team: e.target.value } }))
+                            }
                         />
                         <Label className="text-xs text-muted-foreground">Season</Label>
                         <Input
                             className="h-8 w-20"
                             value={String(project.meta.season ?? "")}
-                            onChange={(e) => setProject((p) => ({ ...p, meta: { ...p.meta, season: safeInt(e.target.value) } }))}
+                            onChange={(e) =>
+                                setProject((p) => ({ ...p, meta: { ...p.meta, season: safeInt(e.target.value) } }))
+                            }
                         />
                         <Label className="text-xs text-muted-foreground">Rev</Label>
                         <Input
                             className="h-8 w-20"
                             value={project.meta.rev ?? ""}
-                            onChange={(e) => setProject((p) => ({ ...p, meta: { ...p.meta, rev: e.target.value } }))}
+                            onChange={(e) =>
+                                setProject((p) => ({ ...p, meta: { ...p.meta, rev: e.target.value } }))
+                            }
                         />
                     </div>
 
@@ -128,7 +133,6 @@ export function TopBar(props: {
                         <Cable className="mr-2 h-4 w-4" />
                         {wireMode ? "Wire: On" : "Wire: Off"}
                     </Button>
-
 
                     <div className="ml-1 flex items-center gap-2">
                         <Badge variant={errorsCount ? "destructive" : "secondary"}>{errorsCount} errors</Badge>

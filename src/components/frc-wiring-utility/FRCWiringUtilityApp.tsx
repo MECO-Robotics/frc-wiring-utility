@@ -66,6 +66,20 @@ export default function FRCWiringUtilityApp() {
         }
     };
 
+    const updateWireMeta = (connId: string, patch: Record<string, any>) => {
+        setProject((p) => ({
+            ...p,
+            connections: p.connections.map((c: any) => (c.id === connId ? { ...c, ...patch } : c)),
+        }));
+    };
+
+    const updateWireRoute = (connId: string, route: { x: number; y: number }[]) => {
+        setProject((p) => ({
+            ...p,
+            connections: p.connections.map((c: any) => (c.id === connId ? { ...c, route } : c)),
+        }));
+    };
+
     const addWire = (
         fromDeviceId: string,
         fromPortId: string,
@@ -220,6 +234,8 @@ export default function FRCWiringUtilityApp() {
                             onMovePlacement={movePlacement}
                             wireMode={wireMode}
                             onCreateWire={addWire}
+                            onUpdateWireRoute={updateWireRoute}
+                            onUpdateWireMeta={updateWireMeta}
                             registerCenterFn={(fn) => {
                                 centerFnRef.current = fn;
                             }}

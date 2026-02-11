@@ -23,6 +23,39 @@ function nodeSizePx(type: unknown, placementScale: number | undefined, fallbackW
     return { w: fallbackW * s, h: fallbackH * s };
 }
 
+type Pt = { x: number; y: number };
+
+function snapToGrid(v: number, grid: number) {
+    if (!Number.isFinite(grid) || grid <= 0) return v;
+    return Math.round(v / grid) * grid;
+}
+
+function defaultRoute(a: Pt, b: Pt, grid: number): Pt[] {
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    if (Math.abs(dx) < 1e-6 || Math.abs(dy) < 1e-6) return [];
+
+    const horizontalFirst = Math.abs(dx) >= Math.abs(dy);
+    if (horizontalFirst) {
+        const mx = snapToGrid((a.x + b.x) / 2, grid);
+        return [{ x: mx, y: a.y }, { x: mx, y: b.y }];
+    } else {
+        const my = snapToGrid((a.y + b.y) / 2, grid);
+        return [{ x: a.x, y: my }, { x: b.x, y: my }];
+    }
+}
+
+function orthoRouteWorld(a: Pt, b: Pt, grid: number): Pt[] {
+    const bends = defaultRoute(a, b, grid);
+    return [a, ...bends, b];
+}
+
+function polylineToSvgPathScreen(pts: { sx: number; sy: number }[]) {
+    if (pts.length === 0) return "";
+    const [p0, ...rest] = pts;
+    return `M ${p0.sx} ${p0.sy} ` + rest.map((p) => `L ${p.sx} ${p.sy}`).join(" ");
+}
+
 export function SchematicCanvas(props: {
     project: Project;
     selectedDeviceId: string | null;
@@ -34,7 +67,8 @@ export function SchematicCanvas(props: {
     onMovePlacement: (deviceId: string, x: number, y: number) => void;
     wireMode?: boolean;
     onCreateWire?: (fromDeviceId: string, fromPortId: string, toDeviceId: string, toPortId: string, portType: PortType) => void;
-    registerCenterFn?: (fn: () => void) => void;
+    onUpdateWireRoute?: (connId: string, route: { x: number; y: number }[]) => void;
+    onUpdateWireMeta?: (connId: string, patch: Record<string, any>) => void; // routeMode, etc    registerCenterFn?: (fn: () => void) => void;
 }) {
     const {
         project,
@@ -47,7 +81,8 @@ export function SchematicCanvas(props: {
         onMovePlacement,
         wireMode = false,
         onCreateWire,
-        registerCenterFn,
+        onUpdateWireRoute,
+        onUpdateWireMeta,
     } = props;
 
     const canvasRef = useRef<HTMLDivElement | null>(null);
@@ -78,6 +113,14 @@ export function SchematicCanvas(props: {
         nodeH: number;
     } | null>(null);
 
+    type BendDrag = {
+        connId: string;
+        bendIndex: number; // index in c.route[]
+        pointerId: number;
+    };
+
+    const [bendDrag, setBendDrag] = useState<BendDrag | null>(null);
+
     type WireDrag = {
         fromDeviceId: string;
         fromPortId: string;
@@ -85,6 +128,88 @@ export function SchematicCanvas(props: {
         pointerSx: number; // canvas-local screen coords
         pointerSy: number;
     };
+
+    type Pt = { x: number; y: number };
+    type RouteMode = "H" | "V";
+
+    function snapToGrid(v: number, grid: number) {
+        if (!Number.isFinite(grid) || grid <= 0) return v;
+        return Math.round(v / grid) * grid;
+    }
+
+    // Enforce orthogonality by projecting each bend onto the required axis vs previous point.
+    // Alternates H/V segments starting from mode. Guarantees last segment axis-aligned by adjusting last bend if needed.
+    function orthogonalizeRoute(a: Pt, b: Pt, bends: Pt[], mode: RouteMode): Pt[] {
+        const pts = bends.map((p) => ({ ...p }));
+        let prev: Pt = { ...a };
+
+        for (let i = 0; i < pts.length; i++) {
+            const wantH = mode === "H" ? i % 2 === 0 : i % 2 === 1; // segment prev->pts[i]
+            if (wantH) {
+                pts[i].y = prev.y;
+            } else {
+                pts[i].x = prev.x;
+            }
+            prev = pts[i];
+        }
+
+        // Ensure last segment (lastBend->b) is axis aligned by nudging last bend if needed
+        if (pts.length > 0) {
+            const last = pts[pts.length - 1];
+            const lastSegWantH = mode === "H" ? pts.length % 2 === 0 : pts.length % 2 === 1; // segment last->b
+            if (lastSegWantH) {
+                // horizontal into b => y must match
+                last.y = b.y;
+            } else {
+                // vertical into b => x must match
+                last.x = b.x;
+            }
+        } else {
+            // no bends: if not aligned, caller should ensure at least 1 bend when locking orthogonal
+        }
+
+        return pts;
+    }
+
+    // Generate an orthogonal route with N bends. Works for N=0 too (but if not aligned, returns 1 bend).
+    function generateRouteWithBends(a: Pt, b: Pt, grid: number, mode: RouteMode, bendCount: number): Pt[] {
+        const aligned = Math.abs(a.x - b.x) < 1e-6 || Math.abs(a.y - b.y) < 1e-6;
+
+        // If bendCount=0 but not aligned, we still need 1 bend to stay orthogonal.
+        const n = Math.max(0, Math.floor(bendCount));
+        if (n === 0) {
+            if (aligned) return [];
+            if (mode === "H") return [{ x: snapToGrid(b.x, grid), y: snapToGrid(a.y, grid) }];
+            return [{ x: snapToGrid(a.x, grid), y: snapToGrid(b.y, grid) }];
+        }
+
+        // Evenly distribute “primary axis” crossing points to give more/less “nodes”
+        const bends: Pt[] = [];
+        const dx = b.x - a.x;
+        const dy = b.y - a.y;
+
+        for (let i = 1; i <= n; i++) {
+            const t = i / (n + 1);
+            const wantH = mode === "H" ? (i - 1) % 2 === 0 : (i - 1) % 2 === 1;
+
+            if (wantH) {
+                // horizontal segment: vary X, lock Y to previous later
+                bends.push({ x: snapToGrid(a.x + dx * t, grid), y: snapToGrid(a.y, grid) });
+            } else {
+                // vertical segment: vary Y
+                bends.push({ x: snapToGrid(a.x, grid), y: snapToGrid(a.y + dy * t, grid) });
+            }
+        }
+
+        // Final orthogonalization pass makes it consistent and last segment aligned.
+        return orthogonalizeRoute(a, b, bends, mode).map((p) => ({ x: snapToGrid(p.x, grid), y: snapToGrid(p.y, grid) }));
+    }
+
+    function polylineToSvgPathScreen(pts: { sx: number; sy: number }[]) {
+        if (pts.length === 0) return "";
+        const [p0, ...rest] = pts;
+        return `M ${p0.sx} ${p0.sy} ` + rest.map((p) => `L ${p.sx} ${p.sy}`).join(" ");
+    }
 
     const [wireDrag, setWireDrag] = useState<WireDrag | null>(null);
 
@@ -95,8 +220,18 @@ export function SchematicCanvas(props: {
         return { x: clientX - r.left, y: clientY - r.top };
     };
 
-    const screenToWorld = (sx: number, sy: number) => ({ x: (sx - pan.x) / zoom, y: (sy - pan.y) / zoom });
+    const [selectedConnId, setSelectedConnId] = useState<string | null>(null);
 
+    function getConnMode(c: any): RouteMode {
+        const m = c.routeMode;
+        return m === "V" ? "V" : "H";
+    }
+
+    function setConnMode(connId: string, mode: RouteMode) {
+        onUpdateWireMeta?.(connId, { routeMode: mode });
+    }
+
+    const screenToWorld = (sx: number, sy: number) => ({ x: (sx - pan.x) / zoom, y: (sy - pan.y) / zoom });
     const worldToScreen = (x: number, y: number) => ({ sx: x * zoom + pan.x, sy: y * zoom + pan.y });
 
     const portWorld = (deviceId: string, portId: string) => {
@@ -115,49 +250,72 @@ export function SchematicCanvas(props: {
         return { x: pl.x + port.x * nodeW, y: pl.y + port.y * nodeH, portType: port.type as PortType };
     };
 
-    type Pt = { x: number; y: number };
-
-    function snapToGrid(v: number, grid: number) {
-        if (!Number.isFinite(grid) || grid <= 0) return v;
-        return Math.round(v / grid) * grid;
+    // ---- Bend edit helpers ----
+    function ensureRoute(c: any, aW: Pt, bW: Pt): Pt[] {
+        const existing: Pt[] = Array.isArray(c.route) ? c.route : [];
+        if (existing.length > 0) return existing;
+        return defaultRoute(aW, bW, GRID);
     }
 
-    function orthoRouteWorld(a: Pt, b: Pt, grid: number): Pt[] {
-        const dx = b.x - a.x;
-        const dy = b.y - a.y;
+    function setBend(connId: string, bendIndex: number, worldX: number, worldY: number) {
+        if (!onUpdateWireRoute) return;
 
-        // If already aligned, straight shot.
-        if (Math.abs(dx) < 1e-6 || Math.abs(dy) < 1e-6) return [a, b];
+        const c = project.connections.find((x: any) => x.id === connId) as any;
+        if (!c) return;
 
-        // Choose whether to go H then V, or V then H.
-        // Heuristic: do the longer axis first (reduces “weird” near-port kinks).
-        const horizontalFirst = Math.abs(dx) >= Math.abs(dy);
+        const a = portWorld(c.from.deviceId, c.from.port);
+        const b = portWorld(c.to.deviceId, c.to.port);
+        if (!a || !b) return;
 
-        if (horizontalFirst) {
-            const mx = snapToGrid((a.x + b.x) / 2, grid);
-            return [
-                a,
-                { x: mx, y: a.y }, // turn 1
-                { x: mx, y: b.y }, // turn 2
-                b,
-            ];
-        } else {
-            const my = snapToGrid((a.y + b.y) / 2, grid);
-            return [
-                a,
-                { x: a.x, y: my }, // turn 1
-                { x: b.x, y: my }, // turn 2
-                b,
-            ];
-        }
+        const mode = getConnMode(c);
+
+        // Ensure we have a bend list; if missing, create 2 bends by default
+        const existing: Pt[] = Array.isArray(c.route) ? c.route : [];
+        const base = existing.length > 0 ? existing : generateRouteWithBends({ x: a.x, y: a.y }, { x: b.x, y: b.y }, GRID, mode, 2);
+
+        const route = base.map((p) => ({ ...p }));
+        if (bendIndex < 0 || bendIndex >= route.length) return;
+
+        route[bendIndex] = { x: snapToGrid(worldX, GRID), y: snapToGrid(worldY, GRID) };
+
+        // Hard lock: force orthogonality after any edit
+        const locked = orthogonalizeRoute({ x: a.x, y: a.y }, { x: b.x, y: b.y }, route, mode)
+            .map((p) => ({ x: snapToGrid(p.x, GRID), y: snapToGrid(p.y, GRID) }));
+
+        onUpdateWireRoute(connId, locked);
     }
 
-    function polylineToSvgPathScreen(pts: { sx: number; sy: number }[]) {
-        if (pts.length === 0) return "";
-        const [p0, ...rest] = pts;
-        return `M ${p0.sx} ${p0.sy} ` + rest.map((p) => `L ${p.sx} ${p.sy}`).join(" ");
+    function setBendCount(connId: string, count: number) {
+        if (!onUpdateWireRoute) return;
+        const c = project.connections.find((x: any) => x.id === connId) as any;
+        if (!c) return;
+
+        const a = portWorld(c.from.deviceId, c.from.port);
+        const b = portWorld(c.to.deviceId, c.to.port);
+        if (!a || !b) return;
+
+        const mode = getConnMode(c);
+        const next = generateRouteWithBends({ x: a.x, y: a.y }, { x: b.x, y: b.y }, GRID, mode, count);
+        onUpdateWireRoute(connId, next);
     }
 
+    function addBend(connId: string) {
+        const c = project.connections.find((x: any) => x.id === connId) as any;
+        const n = Array.isArray(c?.route) ? c.route.length : 0;
+        setBendCount(connId, n + 1);
+    }
+
+    function removeBend(connId: string) {
+        const c = project.connections.find((x: any) => x.id === connId) as any;
+        const n = Array.isArray(c?.route) ? c.route.length : 0;
+        setBendCount(connId, Math.max(0, n - 1));
+    }
+
+    function resetRoute(connId: string) {
+        setBendCount(connId, 2);
+    }
+
+    // ---------- Compatibility highlight ----------
     const compatiblePortSet = React.useMemo(() => {
         if (!wireDrag) return new Set<string>();
         const set = new Set<string>();
@@ -172,6 +330,7 @@ export function SchematicCanvas(props: {
         return set;
     }, [wireDrag, project.devices]);
 
+    // ---------- Port hit test ----------
     const hitPortFromClientPoint = (clientX: number, clientY: number) => {
         let el = document.elementFromPoint(clientX, clientY) as any;
         while (el) {
@@ -216,8 +375,6 @@ export function SchematicCanvas(props: {
     const onCanvasPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
         if (e.button !== 0) return;
 
-        // If in wire mode, only allow panning when clicking truly empty canvas.
-        // Also: never pan when starting on a node or port.
         const target = e.target as HTMLElement | null;
         const onPort = !!target?.closest?.("[data-node-port]");
         const onNode = !!target?.closest?.("[data-node-root]");
@@ -237,6 +394,13 @@ export function SchematicCanvas(props: {
     };
 
     const onCanvasPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+        if (bendDrag) {
+            const pt = canvasPointFromEvent(e.clientX, e.clientY);
+            const w = screenToWorld(pt.x, pt.y);
+            setBend(bendDrag.connId, bendDrag.bendIndex, w.x, w.y);
+            return;
+        }
+
         if (wireDrag) {
             const pt = canvasPointFromEvent(e.clientX, e.clientY);
             setWireDrag((prev) => (prev ? { ...prev, pointerSx: pt.x, pointerSy: pt.y } : prev));
@@ -257,8 +421,12 @@ export function SchematicCanvas(props: {
     const onCanvasPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
         panDragRef.current = null;
 
+        if (bendDrag) {
+            setBendDrag(null);
+            return;
+        }
+
         if (wireDrag) {
-            // Attempt to finalize a wire on pointer up
             const hit = hitPortFromClientPoint(e.clientX, e.clientY);
             if (
                 hit &&
@@ -266,13 +434,7 @@ export function SchematicCanvas(props: {
                 hit.portType === wireDrag.fromPortType &&
                 !(hit.deviceId === wireDrag.fromDeviceId && hit.portId === wireDrag.fromPortId)
             ) {
-                onCreateWire(
-                    wireDrag.fromDeviceId,
-                    wireDrag.fromPortId,
-                    hit.deviceId,
-                    hit.portId,
-                    wireDrag.fromPortType
-                );
+                onCreateWire(wireDrag.fromDeviceId, wireDrag.fromPortId, hit.deviceId, hit.portId, wireDrag.fromPortType);
             }
 
             setWireDrag(null);
@@ -291,7 +453,6 @@ export function SchematicCanvas(props: {
         const w = portWorld(deviceId, portId);
         if (!w) return;
 
-        // Capture on the CANVAS so canvas move/up handlers always fire during wire drag.
         canvasRef.current?.setPointerCapture?.(e.pointerId);
         const pt = canvasPointFromEvent(e.clientX, e.clientY);
         setWireDrag({
@@ -304,7 +465,7 @@ export function SchematicCanvas(props: {
         setSelectedDeviceId(deviceId);
     };
 
-    // ---------- Zoom (wheel, anchored at cursor) ----------
+    // ---------- Zoom ----------
     const onWheel = (e: React.WheelEvent<HTMLDivElement>) => {
         e.preventDefault();
 
@@ -367,88 +528,7 @@ export function SchematicCanvas(props: {
         nodeDragRef.current = null;
     };
 
-    // Grid scales with zoom
     const gridPx = GRID * zoom;
-
-    const centerOnItems = () => {
-        const el = canvasRef.current;
-        if (!el) return;
-
-        const placements = project.devices
-            .map((d) => {
-                const pl = getPlacement(project, d.id);
-                if (!pl) return null;
-                const sz = nodeSizePx(d.type, (pl as any).scale, NODE_W, NODE_H);
-                return { x: pl.x, y: pl.y, w: sz.w, h: sz.h };
-            })
-            .filter(Boolean) as { x: number; y: number; w: number; h: number }[];
-
-        if (placements.length === 0) {
-            setZoom(1);
-            setPan({ x: 0, y: 0 });
-            return;
-        }
-
-        let minX = Infinity,
-            minY = Infinity,
-            maxX = -Infinity,
-            maxY = -Infinity;
-
-        for (const p of placements) {
-            minX = Math.min(minX, p.x);
-            minY = Math.min(minY, p.y);
-            maxX = Math.max(maxX, p.x + p.w);
-            maxY = Math.max(maxY, p.y + p.h);
-        }
-
-        const boundsW = maxX - minX;
-        const boundsH = maxY - minY;
-
-        const cw = el.clientWidth;
-        const ch = el.clientHeight;
-
-        const pad = 80;
-        const availW = Math.max(1, cw - pad * 2);
-        const availH = Math.max(1, ch - pad * 2);
-
-        const fitZoom = Math.min(availW / boundsW, availH / boundsH);
-        const nextZoom = clamp(fitZoom, ZOOM_MIN, ZOOM_MAX);
-
-        const worldCx = minX + boundsW / 2;
-        const worldCy = minY + boundsH / 2;
-
-        const screenCx = cw / 2;
-        const screenCy = ch / 2;
-
-        const nextPanX = screenCx - worldCx * nextZoom;
-        const nextPanY = screenCy - worldCy * nextZoom;
-
-        setZoom(nextZoom);
-        setPan({ x: nextPanX, y: nextPanY });
-    };
-
-    React.useEffect(() => {
-        registerCenterFn?.(centerOnItems);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [registerCenterFn, project, NODE_W, NODE_H]);
-
-    React.useEffect(() => {
-        const onKeyDown = (e: KeyboardEvent) => {
-            if (e.code !== "Space") return;
-
-            const t = e.target as HTMLElement | null;
-            const tag = t?.tagName?.toLowerCase();
-            const isTyping = tag === "input" || tag === "textarea" || (t as any)?.isContentEditable;
-            if (isTyping) return;
-
-            e.preventDefault();
-            centerOnItems();
-        };
-
-        window.addEventListener("keydown", onKeyDown, { passive: false });
-        return () => window.removeEventListener("keydown", onKeyDown as any);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [project, NODE_W, NODE_H, zoom, pan]);
 
     return (
         <div>
@@ -458,7 +538,7 @@ export function SchematicCanvas(props: {
                 onDrop={onCanvasDrop}
                 onPointerDown={onCanvasPointerDown}
                 onPointerMove={onCanvasPointerMove}
-                onPointerUp={(e) => { onCanvasPointerUp(e); }}
+                onPointerUp={onCanvasPointerUp}
                 onClick={onCanvasClick}
                 onContextMenu={(e) => e.preventDefault()}
                 onWheel={onWheel}
@@ -470,87 +550,187 @@ export function SchematicCanvas(props: {
                 style={{
                     backgroundSize: `${gridPx}px ${gridPx}px`,
                     backgroundPosition: `${pan.x}px ${pan.y}px`,
-                    cursor: wireMode ? "crosshair" : (panDragRef.current?.active ? "grabbing" : "grab"),
+                    cursor: wireMode ? "crosshair" : panDragRef.current?.active ? "grabbing" : "grab",
                     touchAction: "none",
+                }}
+                onDragStart={(e) => e.preventDefault()}   // stops ghost-image drag
+                onMouseDown={(e) => {
+                    // prevent text selection + image drag initiation
+                    e.preventDefault();
                 }}
             >
                 <div className="absolute right-3 top-3 z-10 rounded-xl border bg-background/80 px-2 py-1 text-xs text-muted-foreground backdrop-blur">
                     Zoom: {Math.round(zoom * 100)}%
                 </div>
 
-                {/* Wires overlay (screen-space). Endpoints computed from placements so wires move with components. */}
+                {/* Wires visual layer (FRONT) — never blocks node dragging */}
                 <svg
                     className="absolute inset-0 z-40"
                     style={{ width: "100%", height: "100%", pointerEvents: "none" }}
                 >
-                    {project.connections.map((c) => {
+                    {project.connections.map((c: any) => {
                         const a = portWorld(c.from.deviceId, c.from.port);
                         const b = portWorld(c.to.deviceId, c.to.port);
                         if (!a || !b) return null;
 
-                        // Build orthogonal path in WORLD space
-                        const worldPts = orthoRouteWorld({ x: a.x, y: a.y }, { x: b.x, y: b.y }, GRID);
+                        const aW = { x: a.x, y: a.y };
+                        const bW = { x: b.x, y: b.y };
+                        const mode = getConnMode(c);
 
-                        // Convert to SCREEN space for overlay SVG
+                        const bends: Pt[] =
+                            Array.isArray(c.route) && c.route.length > 0 ? c.route : generateRouteWithBends(aW, bW, GRID, mode, 2);
+
+                        const lockedBends = orthogonalizeRoute(aW, bW, bends, mode);
+
+                        const worldPts = [aW, ...lockedBends, bW];
                         const screenPts = worldPts.map((p) => {
                             const s = worldToScreen(p.x, p.y);
                             return { sx: s.sx, sy: s.sy };
                         });
-
                         const dpath = polylineToSvgPathScreen(screenPts);
 
+                        const isSel = selectedConnId === c.id;
+
                         return (
-                            <path
-                                key={c.id}
-                                d={dpath}
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth={3}
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                opacity={0.9}
-                            />
+                            <g key={c.id}>
+                                <path
+                                    d={dpath}
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth={3}
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    opacity={0.9}
+                                />
+                                {/* Optional: selection emphasis without hit-testing */}
+                                {isSel ? (
+                                    <path
+                                        d={dpath}
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth={6}
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        opacity={0.2}
+                                    />
+                                ) : null}
+                            </g>
                         );
                     })}
 
-                    {wireDrag ? (() => {
-                        const a = portWorld(wireDrag.fromDeviceId, wireDrag.fromPortId);
-                        if (!a) return null;
+                    {/* Preview wire while dragging (visual only) */}
+                    {wireDrag
+                        ? (() => {
+                            const a = portWorld(wireDrag.fromDeviceId, wireDrag.fromPortId);
+                            if (!a) return null;
 
-                        // pointer is in SCREEN coords; convert to WORLD for routing
-                        const bWorld = screenToWorld(wireDrag.pointerSx, wireDrag.pointerSy);
+                            const bWorld = screenToWorld(wireDrag.pointerSx, wireDrag.pointerSy);
 
-                        const worldPts = orthoRouteWorld({ x: a.x, y: a.y }, { x: bWorld.x, y: bWorld.y }, GRID);
+                            const worldPts = orthoRouteWorld({ x: a.x, y: a.y }, { x: bWorld.x, y: bWorld.y }, GRID);
+                            const screenPts = worldPts.map((p) => {
+                                const s = worldToScreen(p.x, p.y);
+                                return { sx: s.sx, sy: s.sy };
+                            });
 
+                            const dpath = polylineToSvgPathScreen(screenPts);
+
+                            return (
+                                <path
+                                    d={dpath}
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth={2}
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeDasharray="6 6"
+                                    opacity={0.7}
+                                />
+                            );
+                        })()
+                        : null}
+                </svg>
+
+                {/* Wires interaction layer (FRONT) — only handles (and wire hit-path in wire mode) capture events */}
+                <svg
+                    className="absolute inset-0 z-50"
+                    style={{ width: "100%", height: "100%", pointerEvents: "none" }}
+                >
+                    {project.connections.map((c: any) => {
+                        const a = portWorld(c.from.deviceId, c.from.port);
+                        const b = portWorld(c.to.deviceId, c.to.port);
+                        if (!a || !b) return null;
+
+                        const aW = { x: a.x, y: a.y };
+                        const bW = { x: b.x, y: b.y };
+                        const mode = getConnMode(c);
+
+                        const bends: Pt[] =
+                            Array.isArray(c.route) && c.route.length > 0 ? c.route : generateRouteWithBends(aW, bW, GRID, mode, 2);
+
+                        const lockedBends = orthogonalizeRoute(aW, bW, bends, mode);
+
+                        const worldPts = [aW, ...lockedBends, bW];
                         const screenPts = worldPts.map((p) => {
                             const s = worldToScreen(p.x, p.y);
                             return { sx: s.sx, sy: s.sy };
                         });
-
                         const dpath = polylineToSvgPathScreen(screenPts);
 
-                        return (
-                            <path
-                                d={dpath}
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth={2}
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeDasharray="6 6"
-                                opacity={0.7}
-                            />
-                        );
-                    })() : null}
-                </svg>
+                        const isSel = selectedConnId === c.id;
+                        const handleR = 6;
 
-                {project.devices.length === 0 ? (
-                    <div className="absolute inset-0 grid place-items-center">
-                        <div className="rounded-2xl border bg-background/80 p-4 text-center text-sm text-muted-foreground">
-                            Drag a device from the right panel onto the grid.
-                        </div>
-                    </div>
-                ) : null}
+                        return (
+                            <g key={c.id}>
+                                {/* Only allow clicking/selecting the wire body in wireMode (otherwise it blocks nodes) */}
+                                {wireMode ? (
+                                    <path
+                                        d={dpath}
+                                        fill="none"
+                                        stroke="transparent"
+                                        strokeWidth={16}
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        style={{ pointerEvents: "stroke", cursor: "pointer" }}
+                                        onPointerDown={(e) => {
+                                            e.stopPropagation();
+                                            setSelectedConnId(c.id);
+                                        }}
+                                    />
+                                ) : null}
+
+                                {/* Bend handles: always interactive */}
+                                {lockedBends.map((bp, i) => {
+                                    const s = worldToScreen(bp.x, bp.y);
+                                    return (
+                                        <circle
+                                            key={i}
+                                            cx={s.sx}
+                                            cy={s.sy}
+                                            r={handleR}
+                                            fill="white"
+                                            stroke="black"
+                                            strokeWidth={2}
+                                            style={{ pointerEvents: "all", cursor: "move", opacity: isSel ? 1 : 0.85 }}
+                                            onPointerDown={(e) => {
+                                                e.stopPropagation();
+                                                canvasRef.current?.setPointerCapture?.(e.pointerId);
+                                                setBendDrag({ connId: c.id, bendIndex: i, pointerId: e.pointerId });
+                                                setSelectedConnId(c.id);
+
+                                                if (onUpdateWireRoute && (!Array.isArray(c.route) || c.route.length === 0)) {
+                                                    onUpdateWireRoute(
+                                                        c.id,
+                                                        lockedBends.map((p) => ({ x: snapToGrid(p.x, GRID), y: snapToGrid(p.y, GRID) }))
+                                                    );
+                                                }
+                                            }}
+                                        />
+                                    );
+                                })}
+                            </g>
+                        );
+                    })}
+                </svg>
 
                 <div
                     className="absolute inset-0 z-10"
@@ -577,10 +757,11 @@ export function SchematicCanvas(props: {
                         />
                     ))}
                 </div>
+            </div>
+
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
                 <div>Grid: {GRID}px • Pan: drag empty space • Zoom: mouse wheel • Snap is in world units</div>
-                <div>
-                    {wireMode ? "Wire mode: drag from a port to a matching port." : "Tip: enable Wire mode to route wires by dragging between ports."}
-                </div>
+                <div>{wireMode ? "Wire mode: drag from a port to a matching port." : "Tip: enable Wire mode to route wires by dragging between ports."}</div>
             </div>
         </div>
     );
