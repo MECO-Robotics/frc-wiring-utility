@@ -11,7 +11,6 @@ const PX_PER_IN = 60; // MUST match CanvasNode.tsx or your dragging/fit math won
 
 function nodeSizePx(type: unknown, placementScale: number | undefined, fallbackW: number, fallbackH: number) {
     const item = PALETTE_BY_ID.get(type as any);
-
     const s = typeof placementScale === "number" && Number.isFinite(placementScale) && placementScale > 0 ? placementScale : 1;
 
     const phys = (item as any)?.physical_in;
@@ -21,7 +20,6 @@ function nodeSizePx(type: unknown, placementScale: number | undefined, fallbackW
     if (Number.isFinite(w_in) && Number.isFinite(h_in) && w_in > 0 && h_in > 0) {
         return { w: w_in * PX_PER_IN * s, h: h_in * PX_PER_IN * s };
     }
-
     return { w: fallbackW * s, h: fallbackH * s };
 }
 
@@ -73,7 +71,10 @@ export function SchematicCanvas(props: {
     } = props;
 
     const canvasRef = useRef<HTMLDivElement | null>(null);
+
+    // Prevent the canvas onClick from clearing selection after wire pointer down/up.
     const suppressNextCanvasClickRef = useRef(false);
+
     // screen = world * zoom + pan
     const [pan, setPan] = useState({ x: 0, y: 0 });
     const [zoom, setZoom] = useState(1);
@@ -290,7 +291,7 @@ export function SchematicCanvas(props: {
         onUpdateWireRoute(connId, locked);
     }
 
-    // ----- add/remove/reset bends (still usable from inspector) -----
+    // ----- add/remove/reset bends (usable from inspector) -----
     function setBendCount(connId: string, count: number) {
         if (!onUpdateWireRoute) return;
         const c = getConnById(connId);
@@ -487,12 +488,7 @@ export function SchematicCanvas(props: {
 
         if (wireDrag) {
             const hit = hitPortFromClientPoint(e.clientX, e.clientY);
-            if (
-                hit &&
-                onCreateWire &&
-                hit.portType === wireDrag.fromPortType &&
-                !(hit.deviceId === wireDrag.fromDeviceId && hit.portId === wireDrag.fromPortId)
-            ) {
+            if (hit && onCreateWire && hit.portType === wireDrag.fromPortType && !(hit.deviceId === wireDrag.fromDeviceId && hit.portId === wireDrag.fromPortId)) {
                 onCreateWire(wireDrag.fromDeviceId, wireDrag.fromPortId, hit.deviceId, hit.portId, wireDrag.fromPortType);
             }
             setWireDrag(null);
@@ -599,16 +595,17 @@ export function SchematicCanvas(props: {
         nodeDragRef.current = null;
     };
 
-    const gridPx = GRID * zoom;
-
     // Preview route while dragging wire between ports
     function orthoRouteWorld(a: Pt, b: Pt, grid: number): Pt[] {
         const bends = defaultRoute(a, b, grid);
         return [a, ...bends, b];
     }
 
+    const gridPx = GRID * zoom;
+
     return (
-        <div>
+        // IMPORTANT: flex column + flex-1 canvas => full-height works when parent gives height
+        <div className="flex h-full min-h-0 flex-col">
             <div
                 ref={canvasRef}
                 onDragOver={onCanvasDragOver}
@@ -620,7 +617,7 @@ export function SchematicCanvas(props: {
                 onContextMenu={(e) => e.preventDefault()}
                 onWheel={onWheel}
                 className="
-          relative h-[72vh] min-h-[520px] w-full overflow-hidden rounded-2xl border bg-background select-none
+          relative flex-1 min-h-0 w-full overflow-hidden rounded-2xl border bg-background select-none
           [background-image:linear-gradient(to_right,rgba(0,0,0,0.10)_1px,transparent_1px),linear-gradient(to_bottom,rgba(0,0,0,0.10)_1px,transparent_1px)]
           dark:[background-image:linear-gradient(to_right,rgba(255,255,255,0.10)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.10)_1px,transparent_1px)]
         "
@@ -656,13 +653,12 @@ export function SchematicCanvas(props: {
                         return (
                             <g key={c.id}>
                                 <path d={dpath} fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" opacity={0.9} />
-                                {isSel ? (
-                                    <path d={dpath} fill="none" stroke="currentColor" strokeWidth={6} strokeLinecap="round" strokeLinejoin="round" opacity={0.2} />
-                                ) : null}
+                                {isSel ? <path d={dpath} fill="none" stroke="currentColor" strokeWidth={6} strokeLinecap="round" strokeLinejoin="round" opacity={0.2} /> : null}
                             </g>
                         );
                     })}
 
+                    {/* preview wire while connecting ports */}
                     {wireDrag
                         ? (() => {
                             const a = portWorld(wireDrag.fromDeviceId, wireDrag.fromPortId);
@@ -676,24 +672,12 @@ export function SchematicCanvas(props: {
                             });
 
                             const dpath = polylineToSvgPathScreen(screenPts);
-
-                            return (
-                                <path
-                                    d={dpath}
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth={2}
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeDasharray="6 6"
-                                    opacity={0.7}
-                                />
-                            );
+                            return <path d={dpath} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" strokeDasharray="6 6" opacity={0.7} />;
                         })()
                         : null}
                 </svg>
 
-                {/* Wires interaction layer (FRONT) — only active in wireMode */}
+                {/* Wires interaction layer (FRONT) — active in wireMode */}
                 <svg className="absolute inset-0 z-50" style={{ width: "100%", height: "100%", pointerEvents: "none" }}>
                     {wireMode
                         ? project.connections.map((c: any) => {
@@ -704,7 +688,6 @@ export function SchematicCanvas(props: {
                                 const s = worldToScreen(p.x, p.y);
                                 return { sx: s.sx, sy: s.sy };
                             });
-
                             const dpath = polylineToSvgPathScreen(screenPts);
 
                             return (
@@ -721,7 +704,8 @@ export function SchematicCanvas(props: {
                                             e.preventDefault();
                                             e.stopPropagation();
 
-                                            suppressNextCanvasClickRef.current = true; // <-- ADD THIS
+                                            // This is the key: keep selection from being cleared by the canvas click
+                                            suppressNextCanvasClickRef.current = true;
 
                                             setSelectedConnId(c.id);
                                             setSelectedDeviceId(null);
@@ -738,8 +722,8 @@ export function SchematicCanvas(props: {
                                                 y: snapToGrid(p.y, GRID),
                                             }));
 
-                                            const pt = canvasPointFromEvent(e.clientX, e.clientY);
-                                            const startWorld = screenToWorld(pt.x, pt.y);
+                                            const local = canvasPointFromEvent(e.clientX, e.clientY);
+                                            const startWorld = screenToWorld(local.x, local.y);
 
                                             setWireSegDrag({
                                                 connId: c.id,
@@ -753,10 +737,12 @@ export function SchematicCanvas(props: {
                                         onClick={(e) => {
                                             e.preventDefault();
                                             e.stopPropagation();
+                                            suppressNextCanvasClickRef.current = true;
                                         }}
                                         onPointerUp={(e) => {
                                             e.preventDefault();
                                             e.stopPropagation();
+                                            suppressNextCanvasClickRef.current = true;
                                         }}
                                     />
                                 </g>
@@ -765,7 +751,7 @@ export function SchematicCanvas(props: {
                         : null}
                 </svg>
 
-                {/* Nodes layer (behind wires, but still interactive) */}
+                {/* Nodes layer */}
                 <div
                     className="absolute inset-0 z-10"
                     style={{
@@ -793,7 +779,7 @@ export function SchematicCanvas(props: {
                 </div>
             </div>
 
-            <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+            <div className="mt-3 shrink-0 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
                 <div>Grid: {GRID}px • Pan: drag empty space • Zoom: mouse wheel</div>
                 <div>{wireMode ? "Wire mode: drag from a port to a matching port. Drag wires to adjust routing." : "Tip: enable Wire mode to route wires."}</div>
             </div>

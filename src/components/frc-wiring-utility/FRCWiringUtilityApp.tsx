@@ -217,7 +217,7 @@ export default function FRCWiringUtilityApp() {
             />
 
             <div className="mx-auto grid max-w-7xl min-h-0 grid-cols-[1fr_360px] gap-3 p-3 overflow-hidden">
-                <Card className="rounded-2xl">
+                <Card className="rounded-2xl h-full min-h-0 flex flex-col">
                     <CardHeader className="pb-2">
                         <div className="flex items-center justify-between gap-2">
                             <CardTitle className="text-base">Schematic</CardTitle>
@@ -229,7 +229,7 @@ export default function FRCWiringUtilityApp() {
                         </div>
                     </CardHeader>
 
-                    <CardContent>
+                    <CardContent className="min-h-0 flex-1">
                         <SchematicCanvas
                             project={project}
                             selectedDeviceId={selectedDeviceId}
