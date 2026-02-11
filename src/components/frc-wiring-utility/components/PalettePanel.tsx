@@ -17,6 +17,10 @@ export function PalettePanel(props: {
                 <CardTitle className="text-base">Palette</CardTitle>
             </CardHeader>
 
+            <p className="text-xs text-muted-foreground">
+                Drag components from the right panel onto the grid. Click a component to edit.
+            </p>
+
             <CardContent className="space-y-3">
                 <div className="grid grid-cols-2 gap-2">
                     {PALETTE.map((p) => (

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -26,6 +26,13 @@ export default function FRCWiringUtilityApp() {
     const [project, setProject] = useState<Project>(() => structuredClone(DEFAULT));
     const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(project.devices[0]?.id ?? null);
     const [wireMode, setWireMode] = useState(false);
+    const [selectedConnId, setSelectedConnId] = useState<string | null>(null);
+
+    const wireActionsRef = useRef<{
+        addBend: (connId: string) => void;
+        removeBend: (connId: string) => void;
+        resetRoute: (connId: string) => void;
+    } | null>(null);
 
     const { theme, setTheme } = useTheme();
 
@@ -227,6 +234,11 @@ export default function FRCWiringUtilityApp() {
                             project={project}
                             selectedDeviceId={selectedDeviceId}
                             setSelectedDeviceId={setSelectedDeviceId}
+                            selectedConnId={selectedConnId}
+                            setSelectedConnId={setSelectedConnId}
+                            registerWireActions={(a) => {
+                                wireActionsRef.current = a;
+                            }}
                             GRID={GRID}
                             NODE_W={NODE_W}
                             NODE_H={NODE_H}
@@ -249,10 +261,14 @@ export default function FRCWiringUtilityApp() {
                     <InspectorPanel
                         project={project}
                         selectedDeviceId={selectedDeviceId}
+                        selectedConnectionId={selectedConnId}
                         onDeleteDevice={deleteDevice}
                         onPatchDevice={patchDevice}
                         onSetDeviceType={setDeviceType}
                         onSetCanId={setCanId}
+                        onAddWireNode={(id) => wireActionsRef.current?.addBend(id)}
+                        onRemoveWireNode={(id) => wireActionsRef.current?.removeBend(id)}
+                        onClearWireNodes={(id) => wireActionsRef.current?.resetRoute(id)}
                     />
 
                     <ValidationPanel issues={issues} onSelectDevice={(id) => setSelectedDeviceId(id)} />

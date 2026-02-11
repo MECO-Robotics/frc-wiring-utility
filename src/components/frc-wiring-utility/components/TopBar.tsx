@@ -48,14 +48,11 @@ export function TopBar(props: {
             <div className="mx-auto flex max-w-7xl flex-col gap-2 p-3 md:flex-row md:items-center md:justify-between">
                 <div className="space-y-0.5">
                     <div className="flex items-center gap-2">
-                        <h1 className="text-lg font-semibold tracking-tight">frc-wiring-utility</h1>
                         <Badge variant="secondary" className="hidden md:inline-flex">
                             schematic-first
                         </Badge>
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                        Drag components from the right panel onto the grid. Click a component to edit.
-                    </p>
+
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
