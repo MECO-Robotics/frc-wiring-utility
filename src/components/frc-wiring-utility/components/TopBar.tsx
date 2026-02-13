@@ -1,12 +1,10 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Download, Upload, Moon, Sun, Crosshair, Cable } from "lucide-react";
 import type { Project } from "../types";
-import { safeInt } from "../helpers";
+import { ProjectMetaFields } from "./ProjectMetaFields";
 
 export function TopBar(props: {
     project: Project;
@@ -56,32 +54,7 @@ export function TopBar(props: {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
-                    <div className="flex items-center gap-2">
-                        <Label className="text-xs text-muted-foreground">Team</Label>
-                        <Input
-                            className="h-8 w-20"
-                            value={project.meta.team ?? ""}
-                            onChange={(e) =>
-                                setProject((p) => ({ ...p, meta: { ...p.meta, team: e.target.value } }))
-                            }
-                        />
-                        <Label className="text-xs text-muted-foreground">Season</Label>
-                        <Input
-                            className="h-8 w-20"
-                            value={String(project.meta.season ?? "")}
-                            onChange={(e) =>
-                                setProject((p) => ({ ...p, meta: { ...p.meta, season: safeInt(e.target.value) } }))
-                            }
-                        />
-                        <Label className="text-xs text-muted-foreground">Rev</Label>
-                        <Input
-                            className="h-8 w-20"
-                            value={project.meta.rev ?? ""}
-                            onChange={(e) =>
-                                setProject((p) => ({ ...p, meta: { ...p.meta, rev: e.target.value } }))
-                            }
-                        />
-                    </div>
+                    <ProjectMetaFields project={project} setProject={setProject} />
 
                     <Separator orientation="vertical" className="hidden h-8 md:block" />
 
