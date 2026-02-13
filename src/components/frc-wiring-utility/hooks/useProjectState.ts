@@ -1,8 +1,8 @@
 import { useCallback, useMemo, useRef, useState } from "react";
-import type { Device, DeviceType, Project } from "../types";
-import { DEFAULT } from "../defaults";
-import { validate } from "../validation";
-import { deviceHasCanId, removePlacement, snap, uid, upsertPlacement } from "../helpers";
+import type { Device, DeviceType, Project } from "../core/types";
+import { DEFAULT } from "../core/defaults";
+import { validate } from "../core/validation";
+import { deviceHasCanId, removePlacement, snap, uid, upsertPlacement } from "../core/helpers";
 
 export function useProjectState(grid: number, nodeW: number, nodeH: number) {
     const [project, setProject] = useState<Project>(() => structuredClone(DEFAULT));
@@ -119,4 +119,5 @@ export function useProjectState(grid: number, nodeW: number, nodeH: number) {
         onPaletteDragStart,
     };
 }
+
 

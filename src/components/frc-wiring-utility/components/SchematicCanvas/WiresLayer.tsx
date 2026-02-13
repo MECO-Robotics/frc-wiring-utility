@@ -1,6 +1,6 @@
 import React from "react";
-import type { Project } from "../../types";
-import type { PortType } from "../../palette";
+import type { Project } from "../../core/types";
+import type { PortType } from "../../core/palette";
 import type { Pt as WirePt } from "../../../../helpers/wires";
 import { defaultRoute } from "../../../../helpers/wires";
 import { polylineToSvgPathScreen } from "./wireRouting";
@@ -71,3 +71,5 @@ export function WiresLayer({ project, selectedConnId, wireDrag, GRID, polyPoints
         </svg>
     );
 }
+
+

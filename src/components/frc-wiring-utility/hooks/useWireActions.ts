@@ -1,8 +1,8 @@
 import { useCallback } from "react";
 import type { Dispatch, SetStateAction } from "react";
-import type { NetKind, Project } from "../types";
-import type { PortType } from "../palette";
-import { uid } from "../helpers";
+import type { NetKind, Project } from "../core/types";
+import type { PortType } from "../core/palette";
+import { uid } from "../core/helpers";
 
 function netKindForPortType(pt: PortType): NetKind {
     switch (pt) {
@@ -70,3 +70,4 @@ export function useWireActions(setProject: Dispatch<SetStateAction<Project>>) {
         updateWireRoute,
     };
 }
+

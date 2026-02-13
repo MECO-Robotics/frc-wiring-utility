@@ -1,4 +1,4 @@
-import { PALETTE_BY_ID } from "../../paletteLookup";
+import { PALETTE_BY_ID } from "../../core/paletteLookup";
 
 export const PX_PER_IN = 60; // MUST match CanvasNode.tsx or your dragging/fit math won't match visuals.
 
@@ -29,3 +29,4 @@ export function screenToWorld(sx: number, sy: number, pan: { x: number; y: numbe
 export function worldToScreen(x: number, y: number, pan: { x: number; y: number }, zoom: number) {
     return { sx: x * zoom + pan.x, sy: y * zoom + pan.y };
 }
+

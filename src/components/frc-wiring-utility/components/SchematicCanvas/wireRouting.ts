@@ -1,5 +1,5 @@
-import type { Project } from "../../types";
-import type { PortType } from "../../palette";
+import type { Project } from "../../core/types";
+import type { PortType } from "../../core/palette";
 import type { Pt as WirePt, RouteMode } from "../../../../helpers/wires";
 import { generateRouteWithBends, orthogonalizeRoute, snapToGrid } from "../../../../helpers/wires";
 
@@ -187,3 +187,5 @@ export function setBendCount(
     const next = generateRouteWithBends(info.aW, info.bW, grid, info.mode, count);
     onUpdateWireRoute(connId, next);
 }
+
+

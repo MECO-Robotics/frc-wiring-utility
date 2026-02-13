@@ -1,4 +1,4 @@
-import type { PortType } from "../../palette";
+import type { PortType } from "../../core/palette";
 import type { Pt as WirePt } from "../../../../helpers/wires";
 
 export type WireDrag = {
@@ -17,4 +17,6 @@ export type WireSegDrag = {
     startWorld: WirePt;
     baseRoute: WirePt[];
 };
+
+
 

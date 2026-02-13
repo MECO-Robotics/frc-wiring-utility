@@ -1,6 +1,6 @@
 import React from "react";
-import type { DeviceType } from "../palette";
-import { PALETTE_BY_ID } from "../paletteLookup";
+import type { DeviceType } from "../core/palette";
+import { PALETTE_BY_ID } from "../core/paletteLookup";
 
 type DeviceLike = {
     id?: string;
@@ -118,3 +118,4 @@ export function SchematicNode(props: {
         </div>
     );
 }
+

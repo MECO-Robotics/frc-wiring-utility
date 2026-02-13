@@ -1,8 +1,8 @@
 import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { Device, DeviceType, Issue, Project } from "../types";
-import type { PortType } from "../palette";
+import type { Device, DeviceType, Issue, Project } from "../core/types";
+import type { PortType } from "../core/palette";
 import { SchematicCanvas } from "./SchematicCanvas";
 import { PalettePanel } from "./PalettePanel";
 import { InspectorPanel } from "./InspectorPanel";
@@ -124,3 +124,4 @@ export function AppLayout(props: {
         </div>
     );
 }
+

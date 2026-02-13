@@ -2,8 +2,8 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import type { DeviceType } from "../palette";
-import { PALETTE } from "../palette";
+import type { DeviceType } from "../core/palette";
+import { PALETTE } from "../core/palette";
 
 export function PalettePanel(props: {
     onPaletteDragStart: (e: React.DragEvent, type: DeviceType) => void;
@@ -70,3 +70,4 @@ export function PalettePanel(props: {
         </Card>
     );
 }
+

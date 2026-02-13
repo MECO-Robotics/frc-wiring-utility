@@ -1,8 +1,8 @@
 import React from "react";
-import type { Project } from "../types";
-import { getPlacement } from "../helpers";
+import type { Project } from "../core/types";
+import { getPlacement } from "../core/helpers";
 import { SchematicNode } from "./SchematicNode";
-import { PALETTE_BY_ID } from "../paletteLookup";
+import { PALETTE_BY_ID } from "../core/paletteLookup";
 
 const PX_PER_IN = 60; // tweak to taste (50/60/80). This is "zoom feel" at zoom=1.
 
@@ -108,3 +108,4 @@ export function CanvasNode(props: {
         </div>
     );
 }
+

@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { Device, DeviceType, Project } from "../types";
+import type { Device, DeviceType, Project } from "../core/types";
 import { DeviceInspector } from "./DeviceInspector";
 import { WireInspector } from "./WireInspector";
 
@@ -85,3 +85,4 @@ export function InspectorPanel(props: {
         </Card>
     );
 }
+

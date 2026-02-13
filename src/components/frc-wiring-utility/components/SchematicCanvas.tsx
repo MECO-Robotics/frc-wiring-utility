@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import type { DeviceType, Project } from "../types";
-import { clamp, getPlacement, snapCenterToTopLeft, snapTopLeftByCenter } from "../helpers";
-import { PALETTE_BY_ID } from "../paletteLookup";
-import type { PortType } from "../palette";
+import type { DeviceType, Project } from "../core/types";
+import { clamp, getPlacement, snapCenterToTopLeft, snapTopLeftByCenter } from "../core/helpers";
+import { PALETTE_BY_ID } from "../core/paletteLookup";
+import type { PortType } from "../core/palette";
 import { canvasPointFromEvent, nodeSizePx, screenToWorld, worldToScreen } from "./SchematicCanvas/coords";
 import { NodesLayer } from "./SchematicCanvas/NodesLayer";
 import { WiresLayer } from "./SchematicCanvas/WiresLayer";
@@ -492,3 +492,4 @@ export function SchematicCanvas(props: {
         </div>
     );
 }
+

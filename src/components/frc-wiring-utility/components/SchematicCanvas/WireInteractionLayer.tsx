@@ -1,5 +1,5 @@
 import React from "react";
-import type { Project } from "../../types";
+import type { Project } from "../../core/types";
 import type { Pt as WirePt } from "../../../../helpers/wires";
 import { snapToGrid } from "../../../../helpers/wires";
 import { polylineToSvgPathScreen } from "./wireRouting";
@@ -110,3 +110,5 @@ export function WireInteractionLayer({
         </svg>
     );
 }
+
+

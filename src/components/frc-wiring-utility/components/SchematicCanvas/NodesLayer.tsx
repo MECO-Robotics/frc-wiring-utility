@@ -1,5 +1,5 @@
 import React from "react";
-import type { Project } from "../../types";
+import type { Project } from "../../core/types";
 import { CanvasNode } from "../CanvasNode";
 
 type Props = {
@@ -56,4 +56,5 @@ export function NodesLayer({
         </div>
     );
 }
+
 

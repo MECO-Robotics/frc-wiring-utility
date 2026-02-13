@@ -1,8 +1,8 @@
 import React from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import type { Project } from "../types";
-import { safeInt } from "../helpers";
+import type { Project } from "../core/types";
+import { safeInt } from "../core/helpers";
 
 export function ProjectMetaFields(props: {
     project: Project;
@@ -39,4 +39,5 @@ export function ProjectMetaFields(props: {
         </div>
     );
 }
+
 

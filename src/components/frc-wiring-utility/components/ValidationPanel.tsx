@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle } from "lucide-react";
-import type { Issue } from "../types";
+import type { Issue } from "../core/types";
 
 export function ValidationPanel(props: { issues: Issue[]; onSelectDevice: (id: string) => void }) {
     const { issues, onSelectDevice } = props;
@@ -46,3 +46,4 @@ export function ValidationPanel(props: { issues: Issue[]; onSelectDevice: (id: s
         </Card>
     );
 }
+

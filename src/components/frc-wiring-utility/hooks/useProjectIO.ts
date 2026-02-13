@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import type { Project } from "../types";
+import type { Project } from "../core/types";
 
 export function useProjectIO(opts: {
     setProject: (p: Project) => void;
@@ -33,3 +33,4 @@ export function useProjectIO(opts: {
 
     return { importRef, onImportClick, onImportFile };
 }
+

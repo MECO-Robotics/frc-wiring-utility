@@ -6,9 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Trash2 } from "lucide-react";
-import type { Device, DeviceType } from "../types";
-import { deviceHasCanId, portsFor, safeInt } from "../helpers";
-import { PALETTE } from "../palette";
+import type { Device, DeviceType } from "../core/types";
+import { deviceHasCanId, portsFor, safeInt } from "../core/helpers";
+import { PALETTE } from "../core/palette";
 
 export function DeviceInspector(props: {
     device: Device;
@@ -98,4 +98,5 @@ export function DeviceInspector(props: {
         </div>
     );
 }
+
 

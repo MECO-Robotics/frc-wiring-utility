@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Download, Upload, Moon, Sun, Crosshair, Cable } from "lucide-react";
-import type { Project } from "../types";
+import type { Project } from "../core/types";
 import { ProjectMetaFields } from "./ProjectMetaFields";
 
 export function TopBar(props: {
@@ -113,3 +113,4 @@ export function TopBar(props: {
         </header>
     );
 }
+
