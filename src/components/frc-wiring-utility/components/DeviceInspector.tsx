@@ -1,4 +1,3 @@
-import React from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -48,7 +47,7 @@ export function DeviceInspector(props: {
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                            {(PALETTE.map((x) => x.type) as DeviceType[]).map((t) => (
+                            {(PALETTE.map((x) => x.id) as DeviceType[]).map((t) => (
                                 <SelectItem key={t} value={t}>
                                     {t}
                                 </SelectItem>

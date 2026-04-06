@@ -10,7 +10,14 @@ export function nodeSizePx(type: unknown, placementScale: number | undefined, fa
     const w_in = phys?.w;
     const h_in = phys?.h;
 
-    if (Number.isFinite(w_in) && Number.isFinite(h_in) && w_in > 0 && h_in > 0) {
+    if (
+        typeof w_in === "number" &&
+        Number.isFinite(w_in) &&
+        w_in > 0 &&
+        typeof h_in === "number" &&
+        Number.isFinite(h_in) &&
+        h_in > 0
+    ) {
         return { w: w_in * PX_PER_IN * s, h: h_in * PX_PER_IN * s };
     }
     return { w: fallbackW * s, h: fallbackH * s };

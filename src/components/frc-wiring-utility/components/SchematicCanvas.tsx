@@ -1,4 +1,5 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { DragEvent, PointerEvent, WheelEvent } from "react";
 import type { DeviceType, Project } from "../core/types";
 import { clamp, getPlacement, snapCenterToTopLeft, snapTopLeftByCenter } from "../core/helpers";
 import { PALETTE_BY_ID } from "../core/paletteLookup";
@@ -210,14 +211,14 @@ export function SchematicCanvas(props: {
     };
 
     // ----- palette drop -----
-    const onCanvasDragOver = (e: React.DragEvent) => {
+    const onCanvasDragOver = (e: DragEvent) => {
         if (e.dataTransfer.types.includes("application/x-frc-device-type")) {
             e.preventDefault();
             e.dataTransfer.dropEffect = "copy";
         }
     };
 
-    const onCanvasDrop = (e: React.DragEvent) => {
+    const onCanvasDrop = (e: DragEvent) => {
         const type = e.dataTransfer.getData("application/x-frc-device-type") as DeviceType;
         if (!type) return;
 
@@ -233,7 +234,7 @@ export function SchematicCanvas(props: {
     };
 
     // ----- panning -----
-    const onCanvasPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    const onCanvasPointerDown = (e: PointerEvent<HTMLDivElement>) => {
         if (e.button !== 0) return;
 
         const target = e.target as HTMLElement | null;
@@ -254,7 +255,7 @@ export function SchematicCanvas(props: {
         };
     };
 
-    const onCanvasPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const onCanvasPointerMove = (e: PointerEvent<HTMLDivElement>) => {
         if (wireSegDrag) {
             const pt = canvasPoint(e.clientX, e.clientY);
             const w = toWorld(pt.x, pt.y);
@@ -280,7 +281,7 @@ export function SchematicCanvas(props: {
         setPan({ x: st.originPanX + dx, y: st.originPanY + dy });
     };
 
-    const onCanvasPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    const onCanvasPointerUp = (e: PointerEvent<HTMLDivElement>) => {
         panDragRef.current = null;
 
         if (wireSegDrag) {
@@ -310,7 +311,7 @@ export function SchematicCanvas(props: {
         setSelectedConnId(null);
     };
 
-    const onPortPointerDown = (e: React.PointerEvent, deviceId: string, portId: string) => {
+    const onPortPointerDown = (e: PointerEvent, deviceId: string, portId: string) => {
         if (!wireMode) return;
         e.preventDefault();
         e.stopPropagation();
@@ -334,7 +335,7 @@ export function SchematicCanvas(props: {
     };
 
     // ----- zoom -----
-    const onWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    const onWheel = (e: WheelEvent<HTMLDivElement>) => {
         e.preventDefault();
 
         const pt = canvasPoint(e.clientX, e.clientY);
@@ -353,7 +354,7 @@ export function SchematicCanvas(props: {
     };
 
     // ----- node dragging -----
-    const onNodePointerDown = (e: React.PointerEvent, deviceId: string) => {
+    const onNodePointerDown = (e: PointerEvent, deviceId: string) => {
         if (wireMode) return;
         const pl = getPlacement(project, deviceId);
         if (!pl) return;
@@ -377,7 +378,7 @@ export function SchematicCanvas(props: {
         setSelectedConnId(null);
     };
 
-    const onNodePointerMove = (e: React.PointerEvent) => {
+    const onNodePointerMove = (e: PointerEvent) => {
         const st = nodeDragRef.current;
         if (!st) return;
 
@@ -424,7 +425,6 @@ export function SchematicCanvas(props: {
                     touchAction: "none",
                     userSelect: "none",
                     WebkitUserSelect: "none",
-                    WebkitUserDrag: "none",
                 }}
                 onDragStart={(e) => e.preventDefault()}
             >

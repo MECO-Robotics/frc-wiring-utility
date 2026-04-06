@@ -1,4 +1,4 @@
-import React from "react";
+import type { DragEvent } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Device, DeviceType, Issue, Project } from "../core/types";
@@ -25,7 +25,7 @@ export function AppLayout(props: {
     onMovePlacement: (deviceId: string, x: number, y: number) => void;
     onCreateWire: (fromDeviceId: string, fromPortId: string, toDeviceId: string, toPortId: string, portType: PortType) => void;
     onUpdateWireRoute: (connId: string, route: { x: number; y: number }[]) => void;
-    onPaletteDragStart: (e: React.DragEvent, type: DeviceType) => void;
+    onPaletteDragStart: (e: DragEvent, type: DeviceType) => void;
     onQuickAdd: (type: DeviceType) => void;
     onDeleteDevice: (id: string) => void;
     onPatchDevice: (id: string, patch: Partial<Device>) => void;

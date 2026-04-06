@@ -1,4 +1,3 @@
-import React from "react";
 import { downloadText } from "../core/helpers";
 import { useTheme } from "../hooks/useTheme";
 import { useProjectIO } from "../hooks/useProjectIO";

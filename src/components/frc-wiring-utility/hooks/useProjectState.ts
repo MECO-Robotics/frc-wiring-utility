@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from "react";
+import type { DragEvent } from "react";
 import type { Device, DeviceType, Project } from "../core/types";
 import { DEFAULT } from "../core/defaults";
 import { validate } from "../core/validation";
@@ -89,7 +90,7 @@ export function useProjectState(grid: number, nodeW: number, nodeH: number) {
         }));
     }, []);
 
-    const onPaletteDragStart = useCallback((e: React.DragEvent, type: DeviceType) => {
+    const onPaletteDragStart = useCallback((e: DragEvent, type: DeviceType) => {
         e.dataTransfer.setData("application/x-frc-device-type", type);
         e.dataTransfer.effectAllowed = "copy";
     }, []);

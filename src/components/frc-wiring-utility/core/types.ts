@@ -1,12 +1,6 @@
-export type DeviceType =
-    | "Battery"
-    | "MainBreaker"
-    | "PDH"
-    | "roboRIO"
-    | "Radio"
-    | "MotorController"
-    | "Sensor"
-    | "Other";
+import type { DeviceType as PaletteDeviceType } from "./palette";
+
+export type DeviceType = PaletteDeviceType;
 
 export type NetKind = "POWER_12V" | "CAN" | "PWM" | "DIO" | "ANALOG" | "ETH" | "USB";
 

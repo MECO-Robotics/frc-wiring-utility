@@ -1,4 +1,3 @@
-import React from "react";
 import type { Project } from "../../core/types";
 import type { PortType } from "../../core/palette";
 import type { Pt as WirePt } from "../../../../helpers/wires";

@@ -1,4 +1,4 @@
-import React from "react";
+import type { PointerEvent } from "react";
 import type { DeviceType } from "../core/palette";
 import { PALETTE_BY_ID } from "../core/paletteLookup";
 
@@ -23,7 +23,7 @@ export function SchematicNode(props: {
     portDotRadius?: number;
     wireMode?: boolean;
     compatiblePortSet?: Set<string>; // `${deviceId}::${portId}` for highlighting
-    onPortPointerDown?: (e: React.PointerEvent, deviceId: string, portId: string) => void;
+    onPortPointerDown?: (e: PointerEvent, deviceId: string, portId: string) => void;
 }) {
     const {
         device: d,
@@ -45,9 +45,7 @@ export function SchematicNode(props: {
 
     // Make dots visible regardless of viewBox scale.
     const autoR = Math.max(10, Math.min(vbW, vbH) * 0.012); // ~12px-ish on typical nodes
-    const r = Number.isFinite(portDotRadius) ? portDotRadius! : autoR;
-
-
+    const baseR = Number.isFinite(portDotRadius) ? portDotRadius : autoR;
     return (
         <div
             className={
@@ -70,7 +68,7 @@ export function SchematicNode(props: {
                         const highlight = !!compatiblePortSet?.has(key);
 
                         // Radius in viewBox units (visible even when vb is 1000x1000)
-                        const r = Math.max(10, Math.min(vbW, vbH) * 0.012);
+                        const r = baseR;
 
                         const commonData = {
                             "data-port-id": p.id,
