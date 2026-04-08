@@ -2,7 +2,7 @@
 
 Browser-based utility for laying out FRC wiring components and connections.
 
-Live site: https://happyknightii.github.io/frc-wiring-utility/
+Live site: https://meco-robotics.github.io/frc-wiring-utility/
 
 ## Development
 
